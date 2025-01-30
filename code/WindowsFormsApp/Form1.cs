@@ -81,9 +81,6 @@ namespace WindowsFormsApp
             networkAntPlus = new Network(USER_NETWORK_NUM, USER_NETWORK_KEY, USER_RADIOFREQ);
             heartRateDisplay = new HeartRateDisplay(channel0, networkAntPlus);
 
-            // A receive rate of 32280 counts (1.02 Hz) may be enough
-            heartRateDisplay.ChannelParameters.ChannelPeriod = HeartRate.SlaveChannelPeriod.OneHz;
-
             // Process HR data every time it is received
             heartRateDisplay.HeartRateDataReceived += ProcessHeartRateData;
         }
