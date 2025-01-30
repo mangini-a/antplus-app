@@ -69,8 +69,8 @@ namespace WindowsFormsApp
 
         private void ConfigureANT()
         {
-            device0.ResetSystem();                      // Soft reset
-            System.Threading.Thread.Sleep(500);         // Delay 500ms after a reset
+            device0.ResetSystem();     // Soft reset
+            Thread.Sleep(500);         // Delay 500ms after a reset
 
             if (!device0.setNetworkKey(USER_NETWORK_NUM, USER_NETWORK_KEY, 500))
                 throw new Exception("Error configuring network key");
@@ -104,8 +104,6 @@ namespace WindowsFormsApp
 
             StopFetchingData();
             SaveDataToCSV();
-
-            heartRateLabel.Text = "...";
         }
 
         private void ProcessHeartRateData(HeartRateData data, uint counter)
@@ -338,16 +336,49 @@ namespace WindowsFormsApp
 
         private void SaveDataToCSV()
         {
-            using (StreamWriter writer = new StreamWriter("hr_data.csv"))
+            SaveFileDialog saveFileDialog = new SaveFileDialog
             {
-                // Write header
-                writer.WriteLine("Rx Event,Heart Rate (BPM)");
+                Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+                Title = "Save Heart Rate Data",
+                FileName = "hr_data.csv" // Set a default file name
+            };
 
-                // Write entries
-                foreach (KeyValuePair<uint, byte> kvp in heartRateData)
-                    writer.WriteLine($"{kvp.Key},{kvp.Value}");             
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    using (StreamWriter writer = new StreamWriter(saveFileDialog.FileName))
+                    {
+                        // Write header
+                        writer.WriteLine("Rx Event,Heart Rate (BPM)");
+
+                        // Write entries
+                        foreach (KeyValuePair<uint, byte> kvp in heartRateData)
+                            writer.WriteLine($"{kvp.Key},{kvp.Value}");             
+                    }
+
+                    string message = $"Data saved to {saveFileDialog.FileName}!";
+                    MessageBox.Show(message); // Show the message immediately
+
+                    // Create a timer
+                    System.Windows.Forms.Timer closeTimer = new System.Windows.Forms.Timer();
+                    closeTimer.Interval = 3000; // 3000 milliseconds = 3 seconds
+                    closeTimer.Tick += (sender, e) =>
+                    {
+                        closeTimer.Stop();
+                        Application.Exit();
+                    };
+                    closeTimer.Start();
+
+                    // Prevent the form from closing immediately
+                    this.FormClosing += (sender, e) => e.Cancel = true;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error saving file: {ex.Message}!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
-            MessageBox.Show("Data saved to hr_data.csv");
+            // If the user clicks Cancel, the dialog closes and nothing happens
         }
     }
 }
