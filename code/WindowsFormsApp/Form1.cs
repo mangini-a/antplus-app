@@ -1,13 +1,15 @@
 ﻿#region Using directives
 
 using ANT_Managed_Library;
-using AntPlus.Profiles.HeartRate;
+using AntPlus.Profiles.FitnessEquipment;
 using AntPlus.Types;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Policy;
@@ -15,6 +17,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
 
 #endregion
 
@@ -24,7 +27,7 @@ namespace WindowsFormsApp
     {
         static readonly byte USER_ANT_CHANNEL = 0;      // ANT Channel to use
         static readonly ushort USER_DEVICENUM = 0;      // Allow wildcard matching
-        static readonly byte USER_DEVICETYPE = 0x78;    // Search for an ANT+ HR Monitor
+        static readonly byte USER_DEVICETYPE = 0x11;    // Search for ANT+ Fitness Equipment
         static readonly byte USER_TRANSTYPE = 1;        // Transmission type
 
         static readonly byte USER_NETWORK_NUM = 0;          
@@ -35,17 +38,25 @@ namespace WindowsFormsApp
         static ANT_Device device0;
         static ANT_Channel channel0;
 
-        static HeartRateDisplay heartRateDisplay;
+        static FitnessEquipmentDisplay fitnessEquipmentDisplay;
         static Network networkAntPlus;
 
-        private readonly Dictionary<uint, byte> heartRateData;
+        private Dictionary<TimeSpan, double> resistanceSchedule;
+        private readonly System.Diagnostics.Stopwatch stopwatch;
+        private TimeSpan maxDuration;
 
         public Form1()
         {
             InitializeComponent();
             InitializeANT();
             ConfigureANT();
-            heartRateData = new Dictionary<uint, byte>();
+
+            // Set up the stopwatch
+            stopwatch = new System.Diagnostics.Stopwatch();
+
+            // Load the resistance schedule
+            string filePath = "resistance-schedule.csv";
+            LoadResistanceSchedule(filePath);
         }
 
         private void InitializeANT()
@@ -79,49 +90,23 @@ namespace WindowsFormsApp
                 throw new Exception("Error configuring Channel ID");
 
             networkAntPlus = new Network(USER_NETWORK_NUM, USER_NETWORK_KEY, USER_RADIOFREQ);
-            heartRateDisplay = new HeartRateDisplay(channel0, networkAntPlus);
+            fitnessEquipmentDisplay = new FitnessEquipmentDisplay(channel0 , networkAntPlus);
 
-            // Process HR data every time it is received
-            heartRateDisplay.HeartRateDataReceived += ProcessHeartRateData;
+            // Begin searching for the trainer
+            fitnessEquipmentDisplay.TurnOn();
         }
 
+        /// <summary>
+        /// Handles the 'Start' button's click.
+        /// </summary>
+        /// <param name="sender">System.Windows.Forms.Button instance</param>
+        /// <param name="e">EventArgs object</param>
         private void StartButton_Click(object sender, EventArgs e)
         {
             startButton.Enabled = false;
-            stopButton.Enabled = true;
 
-            // Clear previous data (if any)
-            if (heartRateData.Count != 0)
-                heartRateData.Clear();
-
-            // Begin searching for a sensor
-            heartRateDisplay.TurnOn();          
-        }
-
-        private void StopButton_Click(object sender, EventArgs e)
-        {
-            stopButton.Enabled = false;
-
-            StopFetchingData();
-            SaveDataToCSV();
-        }
-
-        private void ProcessHeartRateData(HeartRateData data, uint counter)
-        {
-            // Update the UI with the incoming HR data
-            if (InvokeRequired)
-                Invoke(new Action(() => UpdateHeartRate(data.HeartRate)));
-            else
-                UpdateHeartRate(data.HeartRate);
-
-            // Store the incoming HR data with the corresponding counter
-            if (!heartRateData.ContainsKey(counter))
-                heartRateData.Add(counter, data.HeartRate);
-        }
-
-        private void UpdateHeartRate(byte heartRate)
-        {
-            heartRateLabel.Text = $"{heartRate} bpm";
+            stopwatch.Start();
+            updateTimer.Start();
         }
 
         /// <summary>
@@ -326,59 +311,99 @@ namespace WindowsFormsApp
         }
 
         /// <summary>
-        /// Shuts down all communication by closing the slave channel and resetting the device.
+        /// Shuts down the communication by closing the slave channel and resetting the device.
         /// </summary>
-        private void StopFetchingData()
+        private void ShutDownCommunication()
         {
-            heartRateDisplay.TurnOff();
+            fitnessEquipmentDisplay.TurnOff();
             ANT_Device.shutdownDeviceInstance(ref device0);
         }
 
-        private void SaveDataToCSV()
+        private void LoadResistanceSchedule(string csvPath)
         {
-            SaveFileDialog saveFileDialog = new SaveFileDialog
+            resistanceSchedule = new Dictionary<TimeSpan, double>();
+            maxDuration = TimeSpan.Zero;
+
+            using (var reader = new StreamReader(csvPath))
             {
-                Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
-                Title = "Save Heart Rate Data",
-                FileName = "hr_data.csv" // Set a default file name
-            };
-
-            if (saveFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                try
+                reader.ReadLine(); // Skip header
+                string line;
+                while ((line = reader.ReadLine()) != null)
                 {
-                    using (StreamWriter writer = new StreamWriter(saveFileDialog.FileName))
-                    {
-                        // Write header
-                        writer.WriteLine("Rx Event,Heart Rate (BPM)");
+                    string[] values = line.Split(',');
+                    TimeSpan timestamp = TimeSpan.ParseExact(values[0].Trim(), @"mm\:ss", CultureInfo.InvariantCulture);
+                    double resistance = double.Parse(values[1].Trim(), CultureInfo.InvariantCulture);
+                    resistanceSchedule[timestamp] = resistance;
 
-                        // Write entries
-                        foreach (KeyValuePair<uint, byte> kvp in heartRateData)
-                            writer.WriteLine($"{kvp.Key},{kvp.Value}");             
-                    }
-
-                    string message = $"Data saved to {saveFileDialog.FileName}!";
-                    MessageBox.Show(message); // Show the message immediately
-
-                    // Create a timer
-                    System.Windows.Forms.Timer closeTimer = new System.Windows.Forms.Timer();
-                    closeTimer.Interval = 3000; // 3000 milliseconds = 3 seconds
-                    closeTimer.Tick += (sender, e) =>
-                    {
-                        closeTimer.Stop();
-                        Application.Exit();
-                    };
-                    closeTimer.Start();
-
-                    // Prevent the form from closing immediately
-                    this.FormClosing += (sender, e) => e.Cancel = true;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error saving file: {ex.Message}!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    // Keep track of the longest timestamp
+                    if (timestamp >  maxDuration)
+                        maxDuration = timestamp;
                 }
             }
-            // If the user clicks Cancel, the dialog closes and nothing happens
+        }
+
+        /// <summary>
+        /// Checks the current elapsed time and finds the appropriate resistance value.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void UpdateTimer_Tick(object sender, EventArgs e)
+        {
+            // Get the current elapsed time
+            TimeSpan currentTime = stopwatch.Elapsed;
+
+            // Check if we've reached the end of the schedule
+            if (currentTime > maxDuration)
+            {
+                stopwatch.Stop();
+                updateTimer.Stop();
+                ShutDownCommunication();
+                MessageBox.Show("Workout complete!");
+                return;
+            }
+
+            // Round down to the nearest second to match CSV format
+            TimeSpan roundedTime = new TimeSpan(0, currentTime.Minutes, currentTime.Seconds);
+
+            // Find the appropriate resistance value and send it to the trainer
+            if (resistanceSchedule.TryGetValue(roundedTime, out double resistance))
+                SetTrainerResistance(resistance);
+        }
+
+        /// <summary>
+        /// Sets the fitness equipment's resistance by sending Data Page 48.
+        /// </summary>
+        /// <param name="resistance"></param>
+        private void SetTrainerResistance(double resistance)
+        {
+            ControlBasicResistancePage command = new ControlBasicResistancePage
+            {
+                TotalResistance = (byte)(resistance * 2) // Units: 0.5%
+            };
+            fitnessEquipmentDisplay.SendBasicResistance(command);
+
+            ShowTransmittedResistance(resistance);
+        }
+
+        /// <summary>
+        /// Updates the UI to show the resistance % being sent to the trainer.
+        /// </summary>
+        /// <param name="resistance"></param>
+        private void ShowTransmittedResistance(double resistance)
+        {
+            if (InvokeRequired)
+                Invoke(new Action(() => UpdateSentResistance(resistance)));
+            else
+                UpdateSentResistance(resistance);
+        }
+
+        /// <summary>
+        /// Sets the label representing the currently sent resistance's text.
+        /// </summary>
+        /// <param name="resistance"></param>
+        private void UpdateSentResistance(double resistance)
+        {
+            resistanceLabel.Text = $"Sending resistance: {resistance}";
         }
     }
 }
