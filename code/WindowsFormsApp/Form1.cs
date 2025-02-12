@@ -1,6 +1,7 @@
 ﻿#region Using directives
 
 using ANT_Managed_Library;
+using AntPlus.Profiles.Common;
 using AntPlus.Profiles.FitnessEquipment;
 using AntPlus.Types;
 using System;
@@ -43,6 +44,7 @@ namespace WindowsFormsApp
 
         private Dictionary<TimeSpan, double> resistanceSchedule;
         private readonly System.Diagnostics.Stopwatch stopwatch;
+        private double lastSentResistance = -1;
         private TimeSpan maxDuration;
 
         public Form1()
@@ -349,25 +351,47 @@ namespace WindowsFormsApp
         /// <param name="e"></param>
         private void UpdateTimer_Tick(object sender, EventArgs e)
         {
-            // Get the current elapsed time
-            TimeSpan currentTime = stopwatch.Elapsed;
+            // 1. Check if the stopwatch is running to avoid unnecessary calculations
+            if (!stopwatch.IsRunning)
+                return;
 
-            // Check if we've reached the end of the schedule
-            if (currentTime > maxDuration)
+            TimeSpan currentTime = stopwatch.Elapsed; // Get the current elapsed time
+
+            // 2. End-of-workout check
+            if (currentTime.TotalSeconds >= maxDuration.TotalSeconds)
             {
-                stopwatch.Stop();
-                updateTimer.Stop();
-                ShutDownCommunication();
-                MessageBox.Show("Workout complete!");
+                WorkoutComplete();
                 return;
             }
 
-            // Round down to the nearest second to match CSV format
-            TimeSpan roundedTime = new TimeSpan(0, currentTime.Minutes, currentTime.Seconds);
+            // 3. Round down to the nearest second to match CSV format
+            TimeSpan roundedTime = TimeSpan.FromSeconds(Math.Floor(currentTime.TotalSeconds));
 
-            // Find the appropriate resistance value and send it to the trainer
+            // 4. Check if the resistance has changed before sending it to the trainer
             if (resistanceSchedule.TryGetValue(roundedTime, out double resistance))
-                SetTrainerResistance(resistance);
+            {
+                // Only set the resistance if it's different from the last value (optimization)
+                if (resistance != lastSentResistance)
+                {
+                    SetTrainerResistance(resistance);
+                    lastSentResistance = resistance; // Store the last sent value
+                }
+            }
+
+            // 5. Update the UI with the *unrounded* current time
+            timeLabel.Text = string.Format("{0:mm\\:ss}", currentTime);
+        }
+
+        private async void WorkoutComplete()
+        {
+            stopwatch.Stop();
+            updateTimer.Stop();
+            ShutDownCommunication();
+
+            // Show the message box asynchronously and wait for it to be closed
+            await Task.Run(() => MessageBox.Show("Workout complete!")); // Run on a separate thread
+
+            this.Invoke((Action)delegate { this.Close(); }); // Close the form on the UI thread
         }
 
         /// <summary>
@@ -382,28 +406,19 @@ namespace WindowsFormsApp
             };
             fitnessEquipmentDisplay.SendBasicResistance(command);
 
-            ShowTransmittedResistance(resistance);
+            // Update the UI with the resistance % being sent
+            desiredResistanceLabel.Text = $"Desired resistance: {resistance}%";
         }
 
-        /// <summary>
-        /// Updates the UI to show the resistance % being sent to the trainer.
-        /// </summary>
-        /// <param name="resistance"></param>
-        private void ShowTransmittedResistance(double resistance)
+        protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            if (InvokeRequired)
-                Invoke(new Action(() => UpdateSentResistance(resistance)));
-            else
-                UpdateSentResistance(resistance);
-        }
+            base.OnFormClosing(e); // Call the base class's OnFormClosing method
 
-        /// <summary>
-        /// Sets the label representing the currently sent resistance's text.
-        /// </summary>
-        /// <param name="resistance"></param>
-        private void UpdateSentResistance(double resistance)
-        {
-            resistanceLabel.Text = $"Sending resistance: {resistance}";
+            stopwatch.Stop();
+            updateTimer.Stop();
+            ShutDownCommunication();
+
+            MessageBox.Show("Workout stopped and communication channel reset.");
         }
     }
 }

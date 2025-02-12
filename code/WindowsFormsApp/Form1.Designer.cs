@@ -31,8 +31,9 @@
             this.components = new System.ComponentModel.Container();
             this.startButton = new System.Windows.Forms.Button();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
-            this.resistanceLabel = new System.Windows.Forms.Label();
+            this.desiredResistanceLabel = new System.Windows.Forms.Label();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.timeLabel = new System.Windows.Forms.Label();
             this.tableLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -41,12 +42,13 @@
             this.startButton.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.tableLayoutPanel1.SetColumnSpan(this.startButton, 2);
             this.startButton.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.startButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.startButton.Font = new System.Drawing.Font("Segoe UI", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.startButton.Location = new System.Drawing.Point(3, 4);
+            this.startButton.FlatAppearance.BorderSize = 0;
+            this.startButton.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.startButton.Font = new System.Drawing.Font("Rubik", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.startButton.Location = new System.Drawing.Point(4, 288);
             this.startButton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.startButton.Name = "startButton";
-            this.startButton.Size = new System.Drawing.Size(552, 106);
+            this.startButton.Size = new System.Drawing.Size(1150, 86);
             this.startButton.TabIndex = 0;
             this.startButton.Text = "Start";
             this.startButton.UseVisualStyleBackColor = false;
@@ -57,39 +59,51 @@
             this.updateTimer.Interval = 500;
             this.updateTimer.Tick += new System.EventHandler(this.UpdateTimer_Tick);
             // 
-            // resistanceLabel
+            // desiredResistanceLabel
             // 
-            this.resistanceLabel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.tableLayoutPanel1.SetColumnSpan(this.resistanceLabel, 2);
-            this.resistanceLabel.Font = new System.Drawing.Font("Segoe UI", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.resistanceLabel.Location = new System.Drawing.Point(3, 114);
-            this.resistanceLabel.Name = "resistanceLabel";
-            this.resistanceLabel.Size = new System.Drawing.Size(552, 115);
-            this.resistanceLabel.TabIndex = 1;
-            this.resistanceLabel.Text = "Sending resistance:";
-            this.resistanceLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.desiredResistanceLabel.Font = new System.Drawing.Font("Rubik", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.desiredResistanceLabel.ForeColor = System.Drawing.Color.Navy;
+            this.desiredResistanceLabel.Location = new System.Drawing.Point(351, 1);
+            this.desiredResistanceLabel.Name = "desiredResistanceLabel";
+            this.desiredResistanceLabel.Size = new System.Drawing.Size(803, 282);
+            this.desiredResistanceLabel.TabIndex = 1;
+            this.desiredResistanceLabel.Text = "The desired resistance will be shown here...";
+            this.desiredResistanceLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // tableLayoutPanel1
             // 
+            this.tableLayoutPanel1.CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.Single;
             this.tableLayoutPanel1.ColumnCount = 2;
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.Controls.Add(this.startButton, 0, 0);
-            this.tableLayoutPanel1.Controls.Add(this.resistanceLabel, 0, 1);
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 30F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 70F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel1.Controls.Add(this.timeLabel, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.startButton, 0, 1);
+            this.tableLayoutPanel1.Controls.Add(this.desiredResistanceLabel, 1, 0);
             this.tableLayoutPanel1.Location = new System.Drawing.Point(12, 12);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 2;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(558, 229);
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 75F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 25F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(1158, 379);
             this.tableLayoutPanel1.TabIndex = 2;
+            // 
+            // timeLabel
+            // 
+            this.timeLabel.Font = new System.Drawing.Font("Rockwell", 40F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.timeLabel.Location = new System.Drawing.Point(4, 1);
+            this.timeLabel.Name = "timeLabel";
+            this.timeLabel.Size = new System.Drawing.Size(340, 282);
+            this.timeLabel.TabIndex = 2;
+            this.timeLabel.Text = "00:00";
+            this.timeLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(120F, 120F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            this.BackColor = System.Drawing.Color.AliceBlue;
-            this.ClientSize = new System.Drawing.Size(582, 253);
+            this.BackColor = System.Drawing.Color.GhostWhite;
+            this.ClientSize = new System.Drawing.Size(1182, 403);
             this.Controls.Add(this.tableLayoutPanel1);
             this.Cursor = System.Windows.Forms.Cursors.Default;
             this.Font = new System.Drawing.Font("Tahoma", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -106,8 +120,9 @@
         #endregion
         private System.Windows.Forms.Button startButton;
         private System.Windows.Forms.Timer updateTimer;
-        private System.Windows.Forms.Label resistanceLabel;
+        private System.Windows.Forms.Label desiredResistanceLabel;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.Label timeLabel;
     }
 }
 
