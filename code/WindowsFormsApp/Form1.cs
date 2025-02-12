@@ -382,10 +382,16 @@ namespace WindowsFormsApp
             timeLabel.Text = string.Format("{0:mm\\:ss}", currentTime);
         }
 
-        private void WorkoutComplete()
+        private async void WorkoutComplete()
         {
-            TerminateOperations();
-            MessageBox.Show("Workout complete.");
+            stopwatch.Stop();
+            updateTimer.Stop();
+            ShutDownCommunication();
+
+            // Show the message box asynchronously and wait for it to be closed
+            await Task.Run(() => MessageBox.Show("Workout complete!")); // Run on a separate thread
+
+            this.Invoke((Action)delegate { this.Close(); }); // Close the form on the UI thread
         }
 
         /// <summary>
@@ -402,23 +408,6 @@ namespace WindowsFormsApp
 
             // Update the UI with the resistance % being sent
             desiredResistanceLabel.Text = $"Desired resistance: {resistance}%";
-        }
-
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            base.OnFormClosing(e); // Call the base class's OnFormClosing method
-            TerminateOperations();
-            MessageBox.Show("Workout stopped and communication channel reset.");
-        }
-
-        /// <summary>
-        /// Stops all timing components and closes communication.
-        /// </summary>
-        private void TerminateOperations()
-        {
-            stopwatch.Stop();
-            updateTimer.Stop();
-            ShutDownCommunication();
         }
     }
 }
