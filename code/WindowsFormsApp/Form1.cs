@@ -47,6 +47,8 @@ namespace WindowsFormsApp
         private double lastSentResistance = -1;
         private TimeSpan maxDuration;
 
+        private SensorData sensorData;
+
         public Form1()
         {
             InitializeComponent();
