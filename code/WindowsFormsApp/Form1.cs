@@ -96,6 +96,37 @@ namespace WindowsFormsApp
 
             // Begin searching for the trainer
             fitnessEquipmentDisplay.TurnOn();
+
+            // Process instantaneous speed every time a General FE Data page is received
+            fitnessEquipmentDisplay.GeneralFePageReceived += ProcessInstantaneousSpeed;
+
+            // Process instantaneous cadence every time a Specific Trainer Data page is received
+            fitnessEquipmentDisplay.SpecificTrainerPageReceived += ProcessInstantaneousCadence;
+        }
+
+        private void ProcessInstantaneousSpeed(GeneralFePage page, uint counter)
+        {
+            // Convert the instantaneous speed being received from m/s to km/h
+            double convertedSpeed = page.Speed * 1000 * 3.6;
+
+            // Update the UI to show the result
+            speedLabel.Text = $"Current speed: {convertedSpeed} km/h";
+
+            // Store the converted speed with the corresponding timestamp
+            // ...
+        }
+
+        private void ProcessInstantaneousCadence(SpecificTrainerPage page, uint counter)
+        {
+            // Ignore the value returned by the trainer when it cannot measure pedaling cadence
+            if (page.InstantaneousCadence == 0xFF)
+                return;
+
+            // Update the UI to show the pedaling cadence recorded from the trainer
+            cadenceLabel.Text = $"Pedaling cadence: {page.InstantaneousCadence} rpm";
+
+            // Store the recorded pedaling cadence with the corresponding timestamp
+            // ...
         }
 
         /// <summary>
