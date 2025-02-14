@@ -58,6 +58,9 @@ namespace WindowsFormsApp
             // Set up the stopwatch
             stopwatch = new System.Diagnostics.Stopwatch();
 
+            // Instantiate SensorData with the Form's stopwatch
+            sensorData = new SensorData(stopwatch);
+
             // Load the resistance schedule
             string filePath = "resistance-schedule.csv";
             LoadResistanceSchedule(filePath);
@@ -115,7 +118,7 @@ namespace WindowsFormsApp
             speedLabel.Text = $"Current speed: {convertedSpeed} km/h";
 
             // Store the converted speed with the corresponding timestamp
-            // ...
+            sensorData.AddData("Speed", convertedSpeed);
         }
 
         private void ProcessInstantaneousCadence(SpecificTrainerPage page, uint counter)
@@ -128,7 +131,7 @@ namespace WindowsFormsApp
             cadenceLabel.Text = $"Pedaling cadence: {page.InstantaneousCadence} rpm";
 
             // Store the recorded pedaling cadence with the corresponding timestamp
-            // ...
+            sensorData.AddData("Cadence", page.InstantaneousCadence);
         }
 
         /// <summary>
@@ -140,8 +143,13 @@ namespace WindowsFormsApp
         {
             startButton.Enabled = false;
 
+            // Guarantee that the baseTimestamp and the stopwatch are perfectly synchronized
+            sensorData.SetBaseTimestamp();
+
             stopwatch.Start();
             updateTimer.Start();
+
+            //sensorData.Reset(); // If needed
         }
 
         /// <summary>

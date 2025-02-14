@@ -24,7 +24,11 @@ namespace WindowsFormsApp
 
         public SensorData(Stopwatch existingStopwatch)
         {
-            this.stopwatch = existingStopwatch;
+            this.stopwatch = existingStopwatch; // Use the provided stopwatch
+        }
+
+        public void SetBaseTimestamp()
+        {
             baseTimestamp = DateTime.Now.Ticks;
         }
 
