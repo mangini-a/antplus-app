@@ -3,6 +3,7 @@
 using ANT_Managed_Library;
 using AntPlus.Profiles.Common;
 using AntPlus.Profiles.FitnessEquipment;
+using AntPlus.Profiles.HeartRate;
 using AntPlus.Types;
 using System;
 using System.Collections.Generic;
@@ -26,20 +27,24 @@ namespace WindowsFormsApp
 {
     public partial class Form1 : Form
     {
-        static readonly byte USER_ANT_CHANNEL = 0;      // ANT Channel to use
-        static readonly ushort USER_DEVICENUM = 0;      // Allow wildcard matching
-        static readonly byte USER_DEVICETYPE = 0x11;    // Search for ANT+ Fitness Equipment
-        static readonly byte USER_TRANSTYPE = 1;        // Transmission type
+        static readonly byte USER_ANT_FE_CHANNEL = 0;       // ANT Channel to use for FE
+        static readonly byte USER_ANT_HR_CHANNEL = 1;       // ANT Channel to use for HR
+        static readonly ushort USER_DEVICENUM = 0;          // Allow wildcard matching
+        static readonly byte USER_FE_DEVICETYPE = 0x11;     // Search for ANT+ Fitness Equipment
+        static readonly byte USER_HR_DEVICETYPE = 0x78;     // Search for ANT+ Heart Rate Monitor
+        static readonly byte USER_TRANSTYPE = 1;            // Transmission type
 
         static readonly byte USER_NETWORK_NUM = 0;          
         static readonly byte[] USER_NETWORK_KEY = { 0xB9, 0xA5, 0x21, 0xFB, 0xBD, 0x72, 0xC3, 0x45 };
 
-        static readonly byte USER_RADIOFREQ = 0x39;     // RF Frequency + 2400 MHz
+        static readonly byte USER_RADIOFREQ = 0x39;         // RF Frequency + 2400 MHz
 
-        static ANT_Device device0;
-        static ANT_Channel channel0;
+        static ANT_Device device0;                          // ANT USB Stick (Hub)
+        static ANT_Channel channel0;                        // Hub (S) - Trainer (M) Link
+        static ANT_Channel channel1;                        // Hub (S) - HR Monitor (M) Link
 
         static FitnessEquipmentDisplay fitnessEquipmentDisplay;
+        static HeartRateDisplay heartRateDisplay;
         static Network networkAntPlus;
 
         private Dictionary<TimeSpan, double> resistanceSchedule;
@@ -47,7 +52,7 @@ namespace WindowsFormsApp
         private double lastSentResistance = -1;
         private TimeSpan maxDuration;
 
-        private SensorData sensorData;
+        private readonly SensorData sensorData;
 
         public Form1()
         {
@@ -62,8 +67,7 @@ namespace WindowsFormsApp
             sensorData = new SensorData(stopwatch);
 
             // Load the resistance schedule
-            string filePath = "resistance-schedule.csv";
-            LoadResistanceSchedule(filePath);
+            LoadResistanceSchedule("resistance-schedule.csv");
         }
 
         private void InitializeANT()
@@ -73,8 +77,11 @@ namespace WindowsFormsApp
                 device0 = new ANT_Device();
                 device0.deviceResponse += new ANT_Device.dDeviceResponseHandler(DeviceResponse);
 
-                channel0 = device0.getChannel(USER_ANT_CHANNEL);
+                channel0 = device0.getChannel(USER_ANT_FE_CHANNEL);
                 channel0.channelResponse += new dChannelResponseHandler(ChannelResponse);
+
+                channel1 = device0.getChannel(USER_ANT_HR_CHANNEL);
+                channel1.channelResponse += new dChannelResponseHandler(ChannelResponse);
             }
             catch (Exception ex)
             {
@@ -93,32 +100,71 @@ namespace WindowsFormsApp
             if (!device0.setNetworkKey(USER_NETWORK_NUM, USER_NETWORK_KEY, 500))
                 throw new Exception("Error configuring network key");
 
-            if (!channel0.setChannelID(USER_DEVICENUM, false, USER_DEVICETYPE, USER_TRANSTYPE, 500))  // Not using pairing bit
+            if (!channel0.setChannelID(USER_DEVICENUM, false, USER_FE_DEVICETYPE, USER_TRANSTYPE, 500)) // Not using pairing bit
+                throw new Exception("Error configuring Channel ID");
+
+            if (!channel1.setChannelID(USER_DEVICENUM, false, USER_HR_DEVICETYPE, USER_TRANSTYPE, 500)) // Not using pairing bit
                 throw new Exception("Error configuring Channel ID");
 
             networkAntPlus = new Network(USER_NETWORK_NUM, USER_NETWORK_KEY, USER_RADIOFREQ);
             fitnessEquipmentDisplay = new FitnessEquipmentDisplay(channel0 , networkAntPlus);
-
-            // Begin searching for the trainer
-            fitnessEquipmentDisplay.TurnOn();
+            heartRateDisplay = new HeartRateDisplay(channel1, networkAntPlus);
 
             // Process instantaneous speed every time a General FE Data page is received
             fitnessEquipmentDisplay.GeneralFePageReceived += ProcessInstantaneousSpeed;
 
             // Process instantaneous cadence every time a Specific Trainer Data page is received
-            fitnessEquipmentDisplay.SpecificTrainerPageReceived += ProcessInstantaneousCadence;
+            //fitnessEquipmentDisplay.SpecificTrainerPageReceived += ProcessInstantaneousCadence;
+
+            // Process HR data every time it is received
+            heartRateDisplay.HeartRateDataReceived += ProcessHeartRateData;
+
+            // A receive rate of 32280 counts (1.02 Hz) may be enough
+            heartRateDisplay.ChannelParameters.ChannelPeriod = HeartRate.SlaveChannelPeriod.OneHz;
+
+            // Begin searching for the trainer and the HR monitor
+            fitnessEquipmentDisplay.TurnOn();
+            heartRateDisplay.TurnOn();
+        }
+
+        private void ProcessHeartRateData(HeartRateData data, uint counter)
+        {
+            // Update the UI with the incoming HR data
+            if (InvokeRequired)
+                Invoke(new Action(() => UpdateHeartRate(data.HeartRate)));
+            else
+                UpdateHeartRate(data.HeartRate);
+
+            // Store the computed HR with the corresponding timestamp
+            //sensorData.AddData("HR (bpm)", data.HeartRate);
+        }
+
+        private void UpdateHeartRate(byte heartRate)
+        {
+            heartRateLabel.Text = $"Computed HR: {heartRate} bpm";
         }
 
         private void ProcessInstantaneousSpeed(GeneralFePage page, uint counter)
         {
-            // Convert the instantaneous speed being received from m/s to km/h
-            double convertedSpeed = page.Speed * 1000 * 3.6;
+            // Convert the instantaneous speed from m/s to km/h
+            double speedKmph = (double)(page.Speed) / 1000.0 * 3.6;
+
+            // Round to nearest integer
+            int roundedSpeed = (int)Math.Round(speedKmph);
 
             // Update the UI to show the result
-            speedLabel.Text = $"Current speed: {convertedSpeed} km/h";
+            if (InvokeRequired)
+                Invoke(new Action(() => UpdateSpeed(roundedSpeed)));
+            else
+                UpdateSpeed(roundedSpeed);
 
             // Store the converted speed with the corresponding timestamp
-            sensorData.AddData("Speed", convertedSpeed);
+            //sensorData.AddData("Speed (km/h)", roundedSpeed);
+        }
+
+        private void UpdateSpeed(double convertedSpeed)
+        {
+            speedLabel.Text = $"Current speed: {convertedSpeed} km/h";
         }
 
         private void ProcessInstantaneousCadence(SpecificTrainerPage page, uint counter)
@@ -128,10 +174,18 @@ namespace WindowsFormsApp
                 return;
 
             // Update the UI to show the pedaling cadence recorded from the trainer
-            cadenceLabel.Text = $"Pedaling cadence: {page.InstantaneousCadence} rpm";
+            if (InvokeRequired)
+                Invoke(new Action(() => UpdateCadence(page.InstantaneousCadence)));
+            else
+                UpdateCadence(page.InstantaneousCadence);
 
             // Store the recorded pedaling cadence with the corresponding timestamp
-            sensorData.AddData("Cadence", page.InstantaneousCadence);
+            //sensorData.AddData("Cadence (rpm)", page.InstantaneousCadence);
+        }
+
+        private void UpdateCadence(byte instantaneousCadence)
+        {
+            cadenceLabel.Text = $"Pedaling cadence: {instantaneousCadence} rpm";
         }
 
         /// <summary>
@@ -144,6 +198,7 @@ namespace WindowsFormsApp
             startButton.Enabled = false;
 
             // Guarantee that the baseTimestamp and the stopwatch are perfectly synchronized
+            sensorData.Reset();
             sensorData.SetBaseTimestamp();
 
             stopwatch.Start();
@@ -354,14 +409,19 @@ namespace WindowsFormsApp
         }
 
         /// <summary>
-        /// Shuts down the communication by closing the slave channel and resetting the device.
+        /// Terminates communication by closing the channels and resetting the device.
         /// </summary>
         private void ShutDownCommunication()
         {
             fitnessEquipmentDisplay.TurnOff();
+            heartRateDisplay.TurnOff();
             ANT_Device.shutdownDeviceInstance(ref device0);
         }
 
+        /// <summary>
+        /// Loads the program that details the resistance values the trainer should apply.
+        /// </summary>
+        /// <param name="csvPath"></param>
         private void LoadResistanceSchedule(string csvPath)
         {
             resistanceSchedule = new Dictionary<TimeSpan, double>();
@@ -423,11 +483,18 @@ namespace WindowsFormsApp
             timeLabel.Text = string.Format("{0:mm\\:ss}", currentTime);
         }
 
+        /// <summary>
+        /// Resets timing components, ends the communication, and terminates the desktop app.
+        /// Generates a CSV file with data recorded by sensors as well.
+        /// </summary>
         private async void WorkoutComplete()
         {
             stopwatch.Stop();
             updateTimer.Stop();
             ShutDownCommunication();
+
+            // Generate a CSV file with all measurements taken by means of the sensors
+            //sensorData.WriteToCsv("sensor-data.csv");
 
             // Show the message box asynchronously and wait for it to be closed
             await Task.Run(() => MessageBox.Show("Workout complete!")); // Run on a separate thread
@@ -448,7 +515,7 @@ namespace WindowsFormsApp
             fitnessEquipmentDisplay.SendBasicResistance(command);
 
             // Update the UI with the resistance % being sent
-            desiredResistanceLabel.Text = $"Desired resistance: {resistance}%";
+            desiredResistanceLabel.Text = $"Desired resistance: {resistance} %";
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿#region Using directives
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -7,6 +9,8 @@ using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
+#endregion
 
 namespace WindowsFormsApp
 {
@@ -17,7 +21,7 @@ namespace WindowsFormsApp
         /// The key is the timestamp (in milliseconds).
         /// The value is a dictionary holding the sensor values for that specific time.
         /// </summary>
-        private Dictionary<long, Dictionary<string, double>> data = new Dictionary<long, Dictionary<string, double>>();
+        private Dictionary<long, Dictionary<string, object>> data = new Dictionary<long, Dictionary<string, object>>();
         
         private Stopwatch stopwatch;
         private long baseTimestamp = 0;
@@ -32,7 +36,13 @@ namespace WindowsFormsApp
             baseTimestamp = DateTime.Now.Ticks;
         }
 
-        // Make sure the data types match the actual data you're receiving from the sensors!
+        /// <summary>
+        /// Stores a measurement recorded by a sensor.
+        /// Invoked when a page of interest is received.
+        /// Does the 'double' data type match the actual data received from the sensors?!
+        /// </summary>
+        /// <param name="sensorName"></param>
+        /// <param name="value"></param>
         public void AddData(string sensorName, double value)
         {
             long timestamp = GetCurrentTimestamp();
@@ -41,7 +51,7 @@ namespace WindowsFormsApp
             lock (data)
             {
                 if (!data.ContainsKey(timestamp))
-                    data[timestamp] = new Dictionary<string, double>();
+                    data[timestamp] = new Dictionary<string, object>();
 
                 data[timestamp][sensorName] = value;
             }
@@ -63,18 +73,20 @@ namespace WindowsFormsApp
             {
                 using (StreamWriter writer = new StreamWriter(filePath))
                 {
-                    // Write header row
-                    writer.WriteLine("Time (ms),HR,Speed,Cadence");
+                    // Write header
+                    //writer.WriteLine("Time (ms),HR (bpm),Speed (km/h),Cadence (rpm)");
+                    writer.WriteLine("Time (ms),HR (bpm),Speed (km/h)");
 
-                    foreach (var kvp in data.OrderBy(x => x.Key))
+                    // Write entries
+                    foreach (KeyValuePair<long, Dictionary<string, object>> kvp in data)
                     {
                         long timestamp = kvp.Key;
-                        Dictionary<string, double> sensorValues = kvp.Value;
+                        Dictionary<string, object> sensorValues = kvp.Value;
 
                         writer.Write(timestamp + ",");
-                        writer.Write(sensorValues.ContainsKey("HR") ? sensorValues["HR"].ToString() : "" + ",");
-                        writer.Write(sensorValues.ContainsKey("Speed") ? sensorValues["Speed"].ToString() : "" + ",");
-                        writer.Write(sensorValues.ContainsKey("Cadence") ? sensorValues["Cadence"].ToString() : "");
+                        writer.Write(sensorValues.ContainsKey("HR (bpm)") ? sensorValues["HR (bpm)"].ToString() : "" + ",");
+                        writer.WriteLine(sensorValues.ContainsKey("Speed (km/h)") ? sensorValues["Speed (km/h)"].ToString() : "");
+                        //writer.WriteLine(sensorValues.ContainsKey("Cadence (rpm)") ? sensorValues["Cadence (rpm)"].ToString() : "");
                     }
                 }
             }
@@ -85,8 +97,7 @@ namespace WindowsFormsApp
             lock (data)
             {
                 data.Clear();
-                stopwatch.Restart();
-                baseTimestamp = DateTime.Now.Ticks;
+                baseTimestamp = 0;
             }
         }
     }
