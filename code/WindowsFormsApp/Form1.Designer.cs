@@ -35,8 +35,8 @@
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.timeLabel = new System.Windows.Forms.Label();
             this.speedLabel = new System.Windows.Forms.Label();
-            this.cadenceLabel = new System.Windows.Forms.Label();
             this.heartRateLabel = new System.Windows.Forms.Label();
+            this.powerLabel = new System.Windows.Forms.Label();
             this.tableLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -50,7 +50,7 @@
             this.startButton.Location = new System.Drawing.Point(4, 155);
             this.startButton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.startButton.Name = "startButton";
-            this.tableLayoutPanel1.SetRowSpan(this.startButton, 3);
+            this.tableLayoutPanel1.SetRowSpan(this.startButton, 4);
             this.startButton.Size = new System.Drawing.Size(282, 219);
             this.startButton.TabIndex = 0;
             this.startButton.Text = "Start";
@@ -65,12 +65,11 @@
             // desiredResistanceLabel
             // 
             this.desiredResistanceLabel.Font = new System.Drawing.Font("Rubik", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.desiredResistanceLabel.ForeColor = System.Drawing.Color.Navy;
+            this.desiredResistanceLabel.ForeColor = System.Drawing.Color.BlueViolet;
             this.desiredResistanceLabel.Location = new System.Drawing.Point(293, 1);
             this.desiredResistanceLabel.Name = "desiredResistanceLabel";
             this.desiredResistanceLabel.Size = new System.Drawing.Size(861, 149);
             this.desiredResistanceLabel.TabIndex = 1;
-            this.desiredResistanceLabel.Text = "The desired resistance will be shown here...";
             this.desiredResistanceLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // tableLayoutPanel1
@@ -83,15 +82,16 @@
             this.tableLayoutPanel1.Controls.Add(this.startButton, 0, 1);
             this.tableLayoutPanel1.Controls.Add(this.desiredResistanceLabel, 1, 0);
             this.tableLayoutPanel1.Controls.Add(this.speedLabel, 1, 1);
-            this.tableLayoutPanel1.Controls.Add(this.cadenceLabel, 1, 2);
-            this.tableLayoutPanel1.Controls.Add(this.heartRateLabel, 1, 3);
+            this.tableLayoutPanel1.Controls.Add(this.heartRateLabel, 1, 4);
+            this.tableLayoutPanel1.Controls.Add(this.powerLabel, 1, 3);
             this.tableLayoutPanel1.Location = new System.Drawing.Point(12, 12);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 4;
+            this.tableLayoutPanel1.RowCount = 5;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 40F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 15F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 15F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 15F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 15F));
             this.tableLayoutPanel1.Size = new System.Drawing.Size(1158, 379);
             this.tableLayoutPanel1.TabIndex = 2;
             // 
@@ -108,32 +108,32 @@
             // speedLabel
             // 
             this.speedLabel.Font = new System.Drawing.Font("Rubik", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.speedLabel.ForeColor = System.Drawing.Color.DarkSlateBlue;
             this.speedLabel.Location = new System.Drawing.Point(293, 151);
             this.speedLabel.Name = "speedLabel";
-            this.speedLabel.Size = new System.Drawing.Size(861, 74);
+            this.speedLabel.Size = new System.Drawing.Size(861, 55);
             this.speedLabel.TabIndex = 3;
-            this.speedLabel.Text = "The speed will be shown here...";
             this.speedLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // cadenceLabel
-            // 
-            this.cadenceLabel.Font = new System.Drawing.Font("Rubik", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cadenceLabel.Location = new System.Drawing.Point(293, 226);
-            this.cadenceLabel.Name = "cadenceLabel";
-            this.cadenceLabel.Size = new System.Drawing.Size(861, 74);
-            this.cadenceLabel.TabIndex = 4;
-            this.cadenceLabel.Text = "The cadence will be shown here...";
-            this.cadenceLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // heartRateLabel
             // 
             this.heartRateLabel.Font = new System.Drawing.Font("Rubik", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.heartRateLabel.Location = new System.Drawing.Point(293, 301);
+            this.heartRateLabel.ForeColor = System.Drawing.Color.Crimson;
+            this.heartRateLabel.Location = new System.Drawing.Point(293, 319);
             this.heartRateLabel.Name = "heartRateLabel";
-            this.heartRateLabel.Size = new System.Drawing.Size(861, 77);
+            this.heartRateLabel.Size = new System.Drawing.Size(861, 59);
             this.heartRateLabel.TabIndex = 5;
-            this.heartRateLabel.Text = "The HR will be shown here...";
             this.heartRateLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // powerLabel
+            // 
+            this.powerLabel.Font = new System.Drawing.Font("Rubik", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.powerLabel.ForeColor = System.Drawing.Color.Orange;
+            this.powerLabel.Location = new System.Drawing.Point(293, 263);
+            this.powerLabel.Name = "powerLabel";
+            this.powerLabel.Size = new System.Drawing.Size(861, 55);
+            this.powerLabel.TabIndex = 6;
+            this.powerLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Form1
             // 
@@ -161,8 +161,8 @@
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.Label timeLabel;
         private System.Windows.Forms.Label speedLabel;
-        private System.Windows.Forms.Label cadenceLabel;
         private System.Windows.Forms.Label heartRateLabel;
+        private System.Windows.Forms.Label powerLabel;
     }
 }
 
