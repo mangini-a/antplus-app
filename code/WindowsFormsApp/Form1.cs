@@ -1,13 +1,17 @@
 ﻿#region Using directives
 
 using ANT_Managed_Library;
+using AntPlus.Profiles.Common;
+using AntPlus.Profiles.FitnessEquipment;
 using AntPlus.Profiles.HeartRate;
 using AntPlus.Types;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Policy;
@@ -15,6 +19,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
 
 #endregion
 
@@ -22,30 +27,47 @@ namespace WindowsFormsApp
 {
     public partial class Form1 : Form
     {
-        static readonly byte USER_ANT_CHANNEL = 0;      // ANT Channel to use
-        static readonly ushort USER_DEVICENUM = 0;      // Allow wildcard matching
-        static readonly byte USER_DEVICETYPE = 0x78;    // Search for an ANT+ HR Monitor
-        static readonly byte USER_TRANSTYPE = 1;        // Transmission type
+        static readonly byte USER_ANT_FE_CHANNEL = 0;       // ANT Channel to use for FE
+        static readonly byte USER_ANT_HR_CHANNEL = 1;       // ANT Channel to use for HR
+        static readonly ushort USER_DEVICENUM = 0;          // Allow wildcard matching
+        static readonly byte USER_FE_DEVICETYPE = 0x11;     // Search for ANT+ Fitness Equipment
+        static readonly byte USER_HR_DEVICETYPE = 0x78;     // Search for ANT+ Heart Rate Monitor
+        static readonly byte USER_TRANSTYPE = 1;            // Transmission type
 
         static readonly byte USER_NETWORK_NUM = 0;          
         static readonly byte[] USER_NETWORK_KEY = { 0xB9, 0xA5, 0x21, 0xFB, 0xBD, 0x72, 0xC3, 0x45 };
 
-        static readonly byte USER_RADIOFREQ = 0x39;     // RF Frequency + 2400 MHz
+        static readonly byte USER_RADIOFREQ = 0x39;         // RF Frequency + 2400 MHz
 
-        static ANT_Device device0;
-        static ANT_Channel channel0;
+        static ANT_Device device0;                          // ANT USB Stick (Hub)
+        static ANT_Channel channel0;                        // Hub (S) - Trainer (M) Link
+        static ANT_Channel channel1;                        // Hub (S) - HR Monitor (M) Link
 
+        static FitnessEquipmentDisplay fitnessEquipmentDisplay;
         static HeartRateDisplay heartRateDisplay;
         static Network networkAntPlus;
 
-        private readonly Dictionary<uint, byte> heartRateData;
+        private Dictionary<TimeSpan, double> resistanceSchedule;
+        private readonly Stopwatch stopwatch;
+        private double lastSentResistance = -1;
+        private TimeSpan maxDuration;
+
+        private readonly SensorData sensorData;
+
+        private long startTimeTicks = 0;
+        private bool firstEventReceived = false;
 
         public Form1()
         {
             InitializeComponent();
             InitializeANT();
             ConfigureANT();
-            heartRateData = new Dictionary<uint, byte>();
+
+            // Set up the stopwatch
+            stopwatch = new Stopwatch();
+
+            // Create an instance of SensorData to store sensor measurements
+            sensorData = new SensorData();
         }
 
         private void InitializeANT()
@@ -55,8 +77,11 @@ namespace WindowsFormsApp
                 device0 = new ANT_Device();
                 device0.deviceResponse += new ANT_Device.dDeviceResponseHandler(DeviceResponse);
 
-                channel0 = device0.getChannel(USER_ANT_CHANNEL);
+                channel0 = device0.getChannel(USER_ANT_FE_CHANNEL);
                 channel0.channelResponse += new dChannelResponseHandler(ChannelResponse);
+
+                channel1 = device0.getChannel(USER_ANT_HR_CHANNEL);
+                channel1.channelResponse += new dChannelResponseHandler(ChannelResponse);
             }
             catch (Exception ex)
             {
@@ -75,53 +100,146 @@ namespace WindowsFormsApp
             if (!device0.setNetworkKey(USER_NETWORK_NUM, USER_NETWORK_KEY, 500))
                 throw new Exception("Error configuring network key");
 
-            if (!channel0.setChannelID(USER_DEVICENUM, false, USER_DEVICETYPE, USER_TRANSTYPE, 500))  // Not using pairing bit
+            if (!channel0.setChannelID(USER_DEVICENUM, false, USER_FE_DEVICETYPE, USER_TRANSTYPE, 500)) // Not using pairing bit
+                throw new Exception("Error configuring Channel ID");
+
+            if (!channel1.setChannelID(USER_DEVICENUM, false, USER_HR_DEVICETYPE, USER_TRANSTYPE, 500)) // Not using pairing bit
                 throw new Exception("Error configuring Channel ID");
 
             networkAntPlus = new Network(USER_NETWORK_NUM, USER_NETWORK_KEY, USER_RADIOFREQ);
-            heartRateDisplay = new HeartRateDisplay(channel0, networkAntPlus);
+            fitnessEquipmentDisplay = new FitnessEquipmentDisplay(channel0, networkAntPlus);
+            heartRateDisplay = new HeartRateDisplay(channel1, networkAntPlus);
+
+            // Process instantaneous speed every time a General FE Data page is received
+            fitnessEquipmentDisplay.GeneralFePageReceived += ProcessSpeedData;
+
+            // Process instantaneous cadence and power every time a Specific Trainer Data page is received
+            fitnessEquipmentDisplay.SpecificTrainerPageReceived += ProcessInstantaneousData;
+
+            // Receiving HR data at a rate of 1 Hz is enough
+            heartRateDisplay.ChannelParameters.ChannelPeriod = HeartRate.SlaveChannelPeriod.OneHz;
 
             // Process HR data every time it is received
             heartRateDisplay.HeartRateDataReceived += ProcessHeartRateData;
+
+            // Begin searching for the trainer and the HR monitor
+            fitnessEquipmentDisplay.TurnOn();
+            heartRateDisplay.TurnOn();
         }
 
+        /// <summary>
+        /// Starts the data collection process and sets up a reference point for calculating elapsed time.
+        /// </summary>
+        /// <param name="sender">System.Windows.Forms.Button instance</param>
+        /// <param name="e">EventArgs object</param>
         private void StartButton_Click(object sender, EventArgs e)
         {
             startButton.Enabled = false;
+            numericUpDown.Enabled = false;
             stopButton.Enabled = true;
 
-            // Clear previous data (if any)
-            if (heartRateData.Count != 0)
-                heartRateData.Clear();
+            // Start a new workout
+            sensorData.ClearData();
+            startTimeTicks = 0;
+            firstEventReceived = false;
 
-            // Begin searching for a sensor
-            heartRateDisplay.TurnOn();          
-        }
-
-        private void StopButton_Click(object sender, EventArgs e)
-        {
-            stopButton.Enabled = false;
-
-            StopFetchingData();
-            SaveDataToCSV();
+            stopwatch.Start();
+            updateTimer.Start();
         }
 
         private void ProcessHeartRateData(HeartRateData data, uint counter)
         {
-            // Update the UI with the incoming HR data
+            // Store the HR data with the corresponding timestamp
+            HandleEvent("HR (bpm)", data.HeartRate);
+
+            // Update the UI (asynchronously if needed)
             if (InvokeRequired)
                 Invoke(new Action(() => UpdateHeartRate(data.HeartRate)));
             else
                 UpdateHeartRate(data.HeartRate);
-
-            // Store the incoming HR data with the corresponding counter
-            if (!heartRateData.ContainsKey(counter))
-                heartRateData.Add(counter, data.HeartRate);
         }
 
         private void UpdateHeartRate(byte heartRate)
         {
             heartRateLabel.Text = $"{heartRate} bpm";
+        }
+
+        private void ProcessInstantaneousData(SpecificTrainerPage page, uint counter)
+        {
+            // Store the recorded cadence with the corresponding timestamp
+            HandleEvent("Cadence (rpm)", page.InstantaneousCadence);
+
+            // Store the calculated power with the corresponding timestamp
+            HandleEvent("Power (W)", page.InstantaneousPower);
+
+            // Update the UI (asynchronously if needed)
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => UpdateCadence(page.InstantaneousCadence)));
+                Invoke(new Action(() => UpdatePower(page.InstantaneousPower)));
+            }
+            else
+            {
+                UpdateCadence(page.InstantaneousCadence);
+                UpdatePower(page.InstantaneousPower);
+            }
+        }
+
+        private void UpdateCadence(byte instantaneousCadence)
+        {
+            cadenceLabel.Text = $"{instantaneousCadence} rpm";
+        }
+
+        private void UpdatePower(ushort instantaneousPower)
+        {
+            powerLabel.Text = $"{instantaneousPower} W";
+        }
+
+        private void ProcessSpeedData(GeneralFePage page, uint counter)
+        {
+            // Convert the instantaneous speed from m/s to km/h
+            double speedKmph = (double)(page.Speed) / 1000.0 * 3.6;
+
+            // Round to nearest integer
+            int roundedSpeed = (int)Math.Round(speedKmph);
+
+            // Store the converted speed with the corresponding timestamp
+            HandleEvent("Speed (km/h)", roundedSpeed);
+
+            // Update the UI to show the result (asynchronously if needed)
+            if (InvokeRequired)
+                Invoke(new Action(() => UpdateSpeed(roundedSpeed)));
+            else
+                UpdateSpeed(roundedSpeed);
+        }
+
+        private void UpdateSpeed(double convertedSpeed)
+        {
+            speedLabel.Text = $"{convertedSpeed} km/h";
+        }
+
+        /// <summary>
+        /// Called by all the individual event handlers to properly store recorded data.
+        /// </summary>
+        /// <param name="sensorName"></param>
+        /// <param name="value"></param>
+        private void HandleEvent(string sensorName, object value)
+        {
+            long timestamp;
+
+            if (!firstEventReceived)
+            {
+                startTimeTicks = DateTime.Now.Ticks; // Capture the time of the very first event
+                timestamp = 0;
+                firstEventReceived = true;
+            }
+            else
+            {
+                timestamp = DateTime.Now.Ticks - startTimeTicks;
+                timestamp /= TimeSpan.TicksPerMillisecond; // Convert to milliseconds
+            }
+
+            sensorData.AddData(sensorName, value, timestamp);
         }
 
         /// <summary>
@@ -326,59 +444,73 @@ namespace WindowsFormsApp
         }
 
         /// <summary>
-        /// Shuts down all communication by closing the slave channel and resetting the device.
+        /// Updates the UI stopwatch with the current time.
         /// </summary>
-        private void StopFetchingData()
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void UpdateTimer_Tick(object sender, EventArgs e)
         {
-            heartRateDisplay.TurnOff();
-            ANT_Device.shutdownDeviceInstance(ref device0);
+            // Get the total elapsed time
+            TimeSpan currentTime = stopwatch.Elapsed;
+
+            // Update the UI with the current time
+            timeLabel.Text = string.Format("{0:mm\\:ss}", currentTime);
         }
 
-        private void SaveDataToCSV()
+        /// <summary>
+        /// Sets the fitness equipment's resistance by sending Data Page 48.
+        /// </summary>
+        /// <param name="resistance"></param>
+        private void SetTrainerResistance(double resistance)
         {
-            SaveFileDialog saveFileDialog = new SaveFileDialog
+            ControlBasicResistancePage command = new ControlBasicResistancePage
             {
-                Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
-                Title = "Save Heart Rate Data",
-                FileName = "hr_data.csv" // Set a default file name
+                TotalResistance = (byte)(resistance * 2) // Units: 0.5%
             };
+            fitnessEquipmentDisplay.SendBasicResistance(command);
 
-            if (saveFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    using (StreamWriter writer = new StreamWriter(saveFileDialog.FileName))
-                    {
-                        // Write header
-                        writer.WriteLine("Rx Event,Heart Rate (BPM)");
+            // Update the UI with the resistance % being sent
+            desiredResistanceLabel.Text = $"{resistance} %";
+        }
 
-                        // Write entries
-                        foreach (KeyValuePair<uint, byte> kvp in heartRateData)
-                            writer.WriteLine($"{kvp.Key},{kvp.Value}");             
-                    }
+        /// <summary>
+        /// Ends the data collection process and generates a related file for retrospective analysis.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void StopButton_Click(object sender, EventArgs e)
+        {
+            stopwatch.Stop();
+            updateTimer.Stop();
 
-                    string message = $"Data saved to {saveFileDialog.FileName}!";
-                    MessageBox.Show(message); // Show the message immediately
+            WorkoutComplete();
+        }
 
-                    // Create a timer
-                    System.Windows.Forms.Timer closeTimer = new System.Windows.Forms.Timer();
-                    closeTimer.Interval = 3000; // 3000 milliseconds = 3 seconds
-                    closeTimer.Tick += (sender, e) =>
-                    {
-                        closeTimer.Stop();
-                        Application.Exit();
-                    };
-                    closeTimer.Start();
+        /// <summary>
+        /// Ends communication and app, to then generate a CSV file with data recorded by sensors.
+        /// </summary>
+        private async void WorkoutComplete()
+        {
+            ShutDownCommunication();
 
-                    // Prevent the form from closing immediately
-                    this.FormClosing += (sender, e) => e.Cancel = true;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error saving file: {ex.Message}!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-            // If the user clicks Cancel, the dialog closes and nothing happens
+            // Generate a CSV file with all measurements taken by means of the sensors
+            sensorData.WriteToCsv("sensor-data.csv");
+
+            // Show a message box asynchronously and wait for it to be closed
+            await Task.Run(() => MessageBox.Show("Output file generated!"));
+
+            // Close the form on the UI thread
+            this.Invoke((Action)delegate { this.Close(); });
+        }
+
+        /// <summary>
+        /// Terminates communication by closing the channels and resetting the device.
+        /// </summary>
+        private void ShutDownCommunication()
+        {
+            fitnessEquipmentDisplay.TurnOff();
+            heartRateDisplay.TurnOff();
+            ANT_Device.shutdownDeviceInstance(ref device0);
         }
     }
 }
