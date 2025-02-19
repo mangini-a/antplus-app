@@ -54,7 +54,7 @@ namespace WindowsFormsApp
                 using (StreamWriter writer = new StreamWriter(filePath))
                 {
                     // Write header
-                    writer.WriteLine("Time (ms),HR (bpm),Power (W),Speed (km/h)");
+                    writer.WriteLine("Time (ms),Cadence (rpm),Power (W),Speed (km/h),HR (bpm)");
 
                     // Write entries
                     foreach (KeyValuePair<long, Dictionary<string, object>> kvp in data)
@@ -64,13 +64,16 @@ namespace WindowsFormsApp
 
                         writer.Write(timestamp + ","); // 'timestamp' is the elapsed time in milliseconds
 
-                        writer.Write(sensorValues.ContainsKey("HR (bpm)") ? sensorValues["HR (bpm)"].ToString() : "");
+                        writer.Write(sensorValues.ContainsKey("Cadence (rpm)") ? sensorValues["Cadence (rpm)"].ToString() : "");
                         writer.Write(",");
 
                         writer.Write(sensorValues.ContainsKey("Power (W)") ? sensorValues["Power (W)"].ToString() : "");
                         writer.Write(",");
 
-                        writer.WriteLine(sensorValues.ContainsKey("Speed (km/h)") ? sensorValues["Speed (km/h)"].ToString() : "");
+                        writer.Write(sensorValues.ContainsKey("Speed (km/h)") ? sensorValues["Speed (km/h)"].ToString() : "");
+                        writer.Write(",");
+
+                        writer.WriteLine(sensorValues.ContainsKey("HR (bpm)") ? sensorValues["HR (bpm)"].ToString() : "");
                     }
                 }
             }

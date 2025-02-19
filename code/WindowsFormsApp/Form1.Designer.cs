@@ -37,6 +37,7 @@
             this.speedLabel = new System.Windows.Forms.Label();
             this.heartRateLabel = new System.Windows.Forms.Label();
             this.powerLabel = new System.Windows.Forms.Label();
+            this.cadenceLabel = new System.Windows.Forms.Label();
             this.tableLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -47,11 +48,11 @@
             this.startButton.FlatAppearance.BorderSize = 0;
             this.startButton.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.startButton.Font = new System.Drawing.Font("Rubik", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.startButton.Location = new System.Drawing.Point(4, 155);
+            this.startButton.Location = new System.Drawing.Point(4, 175);
             this.startButton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.startButton.Name = "startButton";
             this.tableLayoutPanel1.SetRowSpan(this.startButton, 4);
-            this.startButton.Size = new System.Drawing.Size(282, 219);
+            this.startButton.Size = new System.Drawing.Size(232, 249);
             this.startButton.TabIndex = 0;
             this.startButton.Text = "Start";
             this.startButton.UseVisualStyleBackColor = false;
@@ -66,9 +67,9 @@
             // 
             this.desiredResistanceLabel.Font = new System.Drawing.Font("Rubik", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.desiredResistanceLabel.ForeColor = System.Drawing.Color.BlueViolet;
-            this.desiredResistanceLabel.Location = new System.Drawing.Point(293, 1);
+            this.desiredResistanceLabel.Location = new System.Drawing.Point(243, 1);
             this.desiredResistanceLabel.Name = "desiredResistanceLabel";
-            this.desiredResistanceLabel.Size = new System.Drawing.Size(861, 149);
+            this.desiredResistanceLabel.Size = new System.Drawing.Size(711, 169);
             this.desiredResistanceLabel.TabIndex = 1;
             this.desiredResistanceLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -84,6 +85,7 @@
             this.tableLayoutPanel1.Controls.Add(this.speedLabel, 1, 1);
             this.tableLayoutPanel1.Controls.Add(this.heartRateLabel, 1, 4);
             this.tableLayoutPanel1.Controls.Add(this.powerLabel, 1, 3);
+            this.tableLayoutPanel1.Controls.Add(this.cadenceLabel, 1, 2);
             this.tableLayoutPanel1.Location = new System.Drawing.Point(12, 12);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 5;
@@ -92,7 +94,7 @@
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 15F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 15F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 15F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(1158, 379);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(958, 429);
             this.tableLayoutPanel1.TabIndex = 2;
             // 
             // timeLabel
@@ -100,7 +102,7 @@
             this.timeLabel.Font = new System.Drawing.Font("Rockwell", 40F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.timeLabel.Location = new System.Drawing.Point(4, 1);
             this.timeLabel.Name = "timeLabel";
-            this.timeLabel.Size = new System.Drawing.Size(282, 149);
+            this.timeLabel.Size = new System.Drawing.Size(232, 169);
             this.timeLabel.TabIndex = 2;
             this.timeLabel.Text = "00:00";
             this.timeLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -109,9 +111,9 @@
             // 
             this.speedLabel.Font = new System.Drawing.Font("Rubik", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.speedLabel.ForeColor = System.Drawing.Color.DarkSlateBlue;
-            this.speedLabel.Location = new System.Drawing.Point(293, 151);
+            this.speedLabel.Location = new System.Drawing.Point(243, 171);
             this.speedLabel.Name = "speedLabel";
-            this.speedLabel.Size = new System.Drawing.Size(861, 55);
+            this.speedLabel.Size = new System.Drawing.Size(711, 63);
             this.speedLabel.TabIndex = 3;
             this.speedLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -119,9 +121,9 @@
             // 
             this.heartRateLabel.Font = new System.Drawing.Font("Rubik", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.heartRateLabel.ForeColor = System.Drawing.Color.Crimson;
-            this.heartRateLabel.Location = new System.Drawing.Point(293, 319);
+            this.heartRateLabel.Location = new System.Drawing.Point(243, 363);
             this.heartRateLabel.Name = "heartRateLabel";
-            this.heartRateLabel.Size = new System.Drawing.Size(861, 59);
+            this.heartRateLabel.Size = new System.Drawing.Size(711, 65);
             this.heartRateLabel.TabIndex = 5;
             this.heartRateLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
@@ -129,18 +131,28 @@
             // 
             this.powerLabel.Font = new System.Drawing.Font("Rubik", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.powerLabel.ForeColor = System.Drawing.Color.Orange;
-            this.powerLabel.Location = new System.Drawing.Point(293, 263);
+            this.powerLabel.Location = new System.Drawing.Point(243, 299);
             this.powerLabel.Name = "powerLabel";
-            this.powerLabel.Size = new System.Drawing.Size(861, 55);
+            this.powerLabel.Size = new System.Drawing.Size(711, 63);
             this.powerLabel.TabIndex = 6;
             this.powerLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // cadenceLabel
+            // 
+            this.cadenceLabel.Font = new System.Drawing.Font("Rubik", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cadenceLabel.Location = new System.Drawing.Point(243, 235);
+            this.cadenceLabel.Name = "cadenceLabel";
+            this.cadenceLabel.Size = new System.Drawing.Size(711, 63);
+            this.cadenceLabel.TabIndex = 7;
+            this.cadenceLabel.Text = "Cadence: 0 rpm";
+            this.cadenceLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(120F, 120F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.BackColor = System.Drawing.Color.GhostWhite;
-            this.ClientSize = new System.Drawing.Size(1182, 403);
+            this.ClientSize = new System.Drawing.Size(982, 453);
             this.Controls.Add(this.tableLayoutPanel1);
             this.Cursor = System.Windows.Forms.Cursors.Default;
             this.Font = new System.Drawing.Font("Tahoma", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -148,7 +160,7 @@
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.MaximizeBox = false;
             this.Name = "Form1";
-            this.Text = "Heart Rate Display";
+            this.Text = "Heart Rate Controller";
             this.tableLayoutPanel1.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -163,6 +175,7 @@
         private System.Windows.Forms.Label speedLabel;
         private System.Windows.Forms.Label heartRateLabel;
         private System.Windows.Forms.Label powerLabel;
+        private System.Windows.Forms.Label cadenceLabel;
     }
 }
 

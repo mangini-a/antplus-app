@@ -116,8 +116,8 @@ namespace WindowsFormsApp
             // Process instantaneous speed every time a General FE Data page is received
             fitnessEquipmentDisplay.GeneralFePageReceived += ProcessSpeedData;
 
-            // Process instantaneous power every time a Specific Trainer Data page is received
-            fitnessEquipmentDisplay.SpecificTrainerPageReceived += ProcessPowerData;
+            // Process instantaneous cadence and power every time a Specific Trainer Data page is received
+            fitnessEquipmentDisplay.SpecificTrainerPageReceived += ProcessInstantaneousData;
 
             // Receiving HR data at a rate of 1 Hz is enough
             heartRateDisplay.ChannelParameters.ChannelPeriod = HeartRate.SlaveChannelPeriod.OneHz;
@@ -165,16 +165,30 @@ namespace WindowsFormsApp
             heartRateLabel.Text = $"HR: {heartRate} bpm";
         }
 
-        private void ProcessPowerData(SpecificTrainerPage page, uint counter)
+        private void ProcessInstantaneousData(SpecificTrainerPage page, uint counter)
         {
+            // Store the recorded cadence with the corresponding timestamp
+            HandleEvent("Cadence (rpm)", page.InstantaneousCadence);
+
             // Store the calculated power with the corresponding timestamp
             HandleEvent("Power (W)", page.InstantaneousPower);
 
             // Update the UI (asynchronously if needed)
             if (InvokeRequired)
+            {
+                Invoke(new Action(() => UpdateCadence(page.InstantaneousCadence)));
                 Invoke(new Action(() => UpdatePower(page.InstantaneousPower)));
+            }
             else
+            {
+                UpdateCadence(page.InstantaneousCadence);
                 UpdatePower(page.InstantaneousPower);
+            }
+        }
+
+        private void UpdateCadence(byte instantaneousCadence)
+        {
+            cadenceLabel.Text = $"Cadence: {instantaneousCadence} rpm";
         }
 
         private void UpdatePower(ushort instantaneousPower)
