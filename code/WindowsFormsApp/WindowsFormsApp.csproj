@@ -102,6 +102,15 @@
     <Content Include="DSI_SiUSBXp_3_1.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="Resources\setting.png" />
+    <None Include="Resources\technology.png" />
+    <None Include="Resources\heartbeat.png" />
+    <None Include="Resources\cadence1.png" />
+    <None Include="Resources\power1.png" />
+    <None Include="Resources\cadence.png" />
+    <None Include="Resources\speed.png" />
+    <None Include="Resources\power.png" />
+    <None Include="Resources\gear.png" />
     <None Include="Resources\heart.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

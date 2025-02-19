@@ -138,6 +138,7 @@ namespace WindowsFormsApp
         private void StartButton_Click(object sender, EventArgs e)
         {
             startButton.Enabled = false;
+            numericUpDown.Enabled = false;
 
             // Start a new workout
             sensorData.ClearData();
@@ -162,7 +163,7 @@ namespace WindowsFormsApp
 
         private void UpdateHeartRate(byte heartRate)
         {
-            heartRateLabel.Text = $"HR: {heartRate} bpm";
+            heartRateLabel.Text = $"{heartRate} bpm";
         }
 
         private void ProcessInstantaneousData(SpecificTrainerPage page, uint counter)
@@ -188,12 +189,12 @@ namespace WindowsFormsApp
 
         private void UpdateCadence(byte instantaneousCadence)
         {
-            cadenceLabel.Text = $"Cadence: {instantaneousCadence} rpm";
+            cadenceLabel.Text = $"{instantaneousCadence} rpm";
         }
 
         private void UpdatePower(ushort instantaneousPower)
         {
-            powerLabel.Text = $"Power: {instantaneousPower} W";
+            powerLabel.Text = $"{instantaneousPower} W";
         }
 
         private void ProcessSpeedData(GeneralFePage page, uint counter)
@@ -216,7 +217,7 @@ namespace WindowsFormsApp
 
         private void UpdateSpeed(double convertedSpeed)
         {
-            speedLabel.Text = $"Speed: {convertedSpeed} km/h";
+            speedLabel.Text = $"{convertedSpeed} km/h";
         }
 
         /// <summary>
@@ -551,7 +552,7 @@ namespace WindowsFormsApp
             fitnessEquipmentDisplay.SendBasicResistance(command);
 
             // Update the UI with the resistance % being sent
-            desiredResistanceLabel.Text = $"Desired resistance: {resistance} %";
+            desiredResistanceLabel.Text = $"{resistance} %";
         }
     }
 }
