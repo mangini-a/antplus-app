@@ -66,11 +66,8 @@ namespace WindowsFormsApp
             // Set up the stopwatch
             stopwatch = new Stopwatch();
 
-            // Instantiate SensorData with the Form's stopwatch
+            // Create an instance of SensorData to store sensor measurements
             sensorData = new SensorData();
-
-            // Load the resistance schedule
-            LoadResistanceSchedule("resistance-schedule.csv");
         }
 
         private void InitializeANT()
@@ -139,6 +136,7 @@ namespace WindowsFormsApp
         {
             startButton.Enabled = false;
             numericUpDown.Enabled = false;
+            stopButton.Enabled = true;
 
             // Start a new workout
             sensorData.ClearData();
@@ -446,97 +444,17 @@ namespace WindowsFormsApp
         }
 
         /// <summary>
-        /// Terminates communication by closing the channels and resetting the device.
-        /// </summary>
-        private void ShutDownCommunication()
-        {
-            fitnessEquipmentDisplay.TurnOff();
-            heartRateDisplay.TurnOff();
-            ANT_Device.shutdownDeviceInstance(ref device0);
-        }
-
-        /// <summary>
-        /// Loads the program that details the resistance values the trainer should apply.
-        /// </summary>
-        /// <param name="csvPath"></param>
-        private void LoadResistanceSchedule(string csvPath)
-        {
-            resistanceSchedule = new Dictionary<TimeSpan, double>();
-            maxDuration = TimeSpan.Zero;
-
-            using (var reader = new StreamReader(csvPath))
-            {
-                reader.ReadLine(); // Skip header
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    string[] values = line.Split(',');
-                    TimeSpan timestamp = TimeSpan.ParseExact(values[0].Trim(), @"mm\:ss", CultureInfo.InvariantCulture);
-                    double resistance = double.Parse(values[1].Trim(), CultureInfo.InvariantCulture);
-                    resistanceSchedule[timestamp] = resistance;
-
-                    // Keep track of the longest timestamp
-                    if (timestamp >  maxDuration)
-                        maxDuration = timestamp;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Checks the current elapsed time and finds the appropriate resistance value.
+        /// Updates the UI stopwatch with the current time.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void UpdateTimer_Tick(object sender, EventArgs e)
         {
-            // 1. Check if the stopwatch is running to avoid unnecessary calculations
-            if (!stopwatch.IsRunning)
-                return;
+            // Get the total elapsed time
+            TimeSpan currentTime = stopwatch.Elapsed;
 
-            TimeSpan currentTime = stopwatch.Elapsed; // Get the current elapsed time
-
-            // 2. End-of-workout check
-            if (currentTime.TotalSeconds >= maxDuration.TotalSeconds)
-            {
-                WorkoutComplete();
-                return;
-            }
-
-            // 3. Round down to the nearest second to match CSV format
-            TimeSpan roundedTime = TimeSpan.FromSeconds(Math.Floor(currentTime.TotalSeconds));
-
-            // 4. Check if the resistance has changed before sending it to the trainer
-            if (resistanceSchedule.TryGetValue(roundedTime, out double resistance))
-            {
-                // Only set the resistance if it's different from the last value (optimization)
-                if (resistance != lastSentResistance)
-                {
-                    SetTrainerResistance(resistance);
-                    lastSentResistance = resistance; // Store the last sent value
-                }
-            }
-
-            // 5. Update the UI with the *unrounded* current time
+            // Update the UI with the current time
             timeLabel.Text = string.Format("{0:mm\\:ss}", currentTime);
-        }
-
-        /// <summary>
-        /// Resets timing components, ends the communication, and terminates the desktop app.
-        /// Generates a CSV file with data recorded by sensors as well.
-        /// </summary>
-        private async void WorkoutComplete()
-        {
-            stopwatch.Stop();
-            updateTimer.Stop();
-            ShutDownCommunication();
-
-            // Generate a CSV file with all measurements taken by means of the sensors
-            sensorData.WriteToCsv("sensor-data.csv");
-
-            // Show the message box asynchronously and wait for it to be closed
-            await Task.Run(() => MessageBox.Show("Workout complete!")); // Run on a separate thread
-
-            this.Invoke((Action)delegate { this.Close(); }); // Close the form on the UI thread
         }
 
         /// <summary>
@@ -553,6 +471,46 @@ namespace WindowsFormsApp
 
             // Update the UI with the resistance % being sent
             desiredResistanceLabel.Text = $"{resistance} %";
+        }
+
+        /// <summary>
+        /// Ends the data collection process and generates a related file for retrospective analysis.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void StopButton_Click(object sender, EventArgs e)
+        {
+            stopwatch.Stop();
+            updateTimer.Stop();
+
+            WorkoutComplete();
+        }
+
+        /// <summary>
+        /// Ends communication and app, to then generate a CSV file with data recorded by sensors.
+        /// </summary>
+        private async void WorkoutComplete()
+        {
+            ShutDownCommunication();
+
+            // Generate a CSV file with all measurements taken by means of the sensors
+            sensorData.WriteToCsv("sensor-data.csv");
+
+            // Show a message box asynchronously and wait for it to be closed
+            await Task.Run(() => MessageBox.Show("Output file generated!"));
+
+            // Close the form on the UI thread
+            this.Invoke((Action)delegate { this.Close(); });
+        }
+
+        /// <summary>
+        /// Terminates communication by closing the channels and resetting the device.
+        /// </summary>
+        private void ShutDownCommunication()
+        {
+            fitnessEquipmentDisplay.TurnOff();
+            heartRateDisplay.TurnOff();
+            ANT_Device.shutdownDeviceInstance(ref device0);
         }
     }
 }
