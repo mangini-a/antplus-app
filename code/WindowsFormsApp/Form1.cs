@@ -1,25 +1,16 @@
 ﻿#region Using directives
 
 using ANT_Managed_Library;
-using AntPlus.Profiles.Common;
 using AntPlus.Profiles.FitnessEquipment;
 using AntPlus.Profiles.HeartRate;
 using AntPlus.Types;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.Drawing;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Security.Policy;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Xml.Linq;
 
 #endregion
 
@@ -27,35 +18,33 @@ namespace WindowsFormsApp
 {
     public partial class Form1 : Form
     {
-        static readonly byte USER_ANT_FE_CHANNEL = 0;       // ANT Channel to use for FE
-        static readonly byte USER_ANT_HR_CHANNEL = 1;       // ANT Channel to use for HR
-        static readonly ushort USER_DEVICENUM = 0;          // Allow wildcard matching
-        static readonly byte USER_FE_DEVICETYPE = 0x11;     // Search for ANT+ Fitness Equipment
-        static readonly byte USER_HR_DEVICETYPE = 0x78;     // Search for ANT+ Heart Rate Monitor
-        static readonly byte USER_TRANSTYPE = 1;            // Transmission type
+        private static readonly byte USER_ANT_FE_CHANNEL = 0;       // ANT Channel to use for FE
+        private static readonly byte USER_ANT_HR_CHANNEL = 1;       // ANT Channel to use for HR
+        private static readonly ushort USER_DEVICENUM = 0;          // Allow wildcard matching
+        private static readonly byte USER_FE_DEVICETYPE = 0x11;     // Search for ANT+ Fitness Equipment
+        private static readonly byte USER_HR_DEVICETYPE = 0x78;     // Search for ANT+ Heart Rate Monitor
+        private static readonly byte USER_TRANSTYPE = 1;            // Transmission type
 
-        static readonly byte USER_NETWORK_NUM = 0;          
-        static readonly byte[] USER_NETWORK_KEY = { 0xB9, 0xA5, 0x21, 0xFB, 0xBD, 0x72, 0xC3, 0x45 };
+        private static readonly byte USER_NETWORK_NUM = 0;
+        private static readonly byte[] USER_NETWORK_KEY = { 0xB9, 0xA5, 0x21, 0xFB, 0xBD, 0x72, 0xC3, 0x45 };
 
-        static readonly byte USER_RADIOFREQ = 0x39;         // RF Frequency + 2400 MHz
+        private static readonly byte USER_RADIOFREQ = 0x39;         // RF Frequency + 2400 MHz
 
-        static ANT_Device device0;                          // ANT USB Stick (Hub)
-        static ANT_Channel channel0;                        // Hub (S) - Trainer (M) Link
-        static ANT_Channel channel1;                        // Hub (S) - HR Monitor (M) Link
+        private static ANT_Device device0;                          // ANT USB Stick (Hub)
+        private static ANT_Channel channel0;                        // Hub (S) - Trainer (M) Link
+        private static ANT_Channel channel1;                        // Hub (S) - HR Monitor (M) Link
 
-        static FitnessEquipmentDisplay fitnessEquipmentDisplay;
-        static HeartRateDisplay heartRateDisplay;
-        static Network networkAntPlus;
+        private static FitnessEquipmentDisplay fitnessEquipmentDisplay;
+        private static HeartRateDisplay heartRateDisplay;
+        private static Network networkAntPlus;
 
-        private Dictionary<TimeSpan, double> resistanceSchedule;
         private readonly Stopwatch stopwatch;
-        private double lastSentResistance = -1;
-        private TimeSpan maxDuration;
-
-        private readonly SensorData sensorData;
+        private readonly DataManager dataManager;
+        private Controller controller;
 
         private long startTimeTicks = 0;
         private bool firstEventReceived = false;
+        private byte pulseSamples = 0;
 
         public Form1()
         {
@@ -63,11 +52,11 @@ namespace WindowsFormsApp
             InitializeANT();
             ConfigureANT();
 
-            // Set up the stopwatch
+            // Set up a stopwatch to measure activity time
             stopwatch = new Stopwatch();
 
-            // Create an instance of SensorData to store sensor measurements
-            sensorData = new SensorData();
+            // Create a data manager to store collected/computed data
+            dataManager = new DataManager();
         }
 
         private void InitializeANT()
@@ -128,7 +117,7 @@ namespace WindowsFormsApp
         }
 
         /// <summary>
-        /// Starts the data collection process and sets up a reference point for calculating elapsed time.
+        /// Starts the data collection process and enables the PI controller.
         /// </summary>
         /// <param name="sender">System.Windows.Forms.Button instance</param>
         /// <param name="e">EventArgs object</param>
@@ -136,94 +125,130 @@ namespace WindowsFormsApp
         {
             startButton.Enabled = false;
             numericUpDown.Enabled = false;
-            stopButton.Enabled = true;
+
+            // Create a controller and assign it the setpoint selected through the UI
+            controller = new Controller(Decimal.ToByte(numericUpDown.Value));
 
             // Start a new workout
-            sensorData.ClearData();
+            dataManager.ClearData();
             startTimeTicks = 0;
             firstEventReceived = false;
+            pulseSamples = 0;
 
             stopwatch.Start();
             updateTimer.Start();
         }
 
+        /// <summary>
+        /// Displays the decoded heart rate data, stores it, and uses it as a process variable.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="counter"></param>
         private void ProcessHeartRateData(HeartRateData data, uint counter)
         {
-            // Store the HR data with the corresponding timestamp
-            HandleEvent("HR (bpm)", data.HeartRate);
-
             // Update the UI (asynchronously if needed)
             if (InvokeRequired)
-                Invoke(new Action(() => UpdateHeartRate(data.HeartRate)));
+                Invoke(new Action(() => heartRateLabel.Text = $"{data.HeartRate} bpm"));
             else
-                UpdateHeartRate(data.HeartRate);
+                heartRateLabel.Text = $"{data.HeartRate} bpm";
+
+            // If training has been started, enable the controller and store the received data
+            if (stopwatch.IsRunning)
+            {
+                HandleEvent("HR (bpm)", data.HeartRate);
+
+                double computedResistance = controller.ComputeControlAction(data.HeartRate);
+                computedResistance = FitToSaturationLimits(computedResistance);
+
+                // Round the adapted output to the nearest integer value
+                double roundedResistance = Math.Round(computedResistance);
+
+                HandleEvent("Resistance (%)", roundedResistance);
+                SetTrainerResistance(roundedResistance);
+
+                pulseSamples++;
+
+                // End the session once 100 heartbeat samples have been collected
+                if (pulseSamples == 100)
+                {
+                    pulseSamples = 0;
+                    WorkoutComplete();
+                }
+            }
         }
 
-        private void UpdateHeartRate(byte heartRate)
+        /// <summary>
+        /// Adapts the PI controller's output to saturation boundaries (if needed).
+        /// </summary>
+        /// <param name="computedResistance"></param>
+        /// <returns></returns>
+        private double FitToSaturationLimits(double computedResistance)
         {
-            heartRateLabel.Text = $"{heartRate} bpm";
+            if (computedResistance < 0)                 // Lower boundary (0%) broken
+                return 0;
+            else if (computedResistance > 100)          // Upper boundary (100%) broken
+                return 100;
+            else                                        // Acceptable range (0-100%)
+                return computedResistance;
         }
 
+        /// <summary>
+        /// Displays the instantaneous cadence and power recorded by the trainer and stores them.
+        /// </summary>
+        /// <param name="page"></param>
+        /// <param name="counter"></param>
         private void ProcessInstantaneousData(SpecificTrainerPage page, uint counter)
         {
-            // Store the recorded cadence with the corresponding timestamp
-            HandleEvent("Cadence (rpm)", page.InstantaneousCadence);
-
-            // Store the calculated power with the corresponding timestamp
-            HandleEvent("Power (W)", page.InstantaneousPower);
-
             // Update the UI (asynchronously if needed)
             if (InvokeRequired)
             {
-                Invoke(new Action(() => UpdateCadence(page.InstantaneousCadence)));
-                Invoke(new Action(() => UpdatePower(page.InstantaneousPower)));
+                Invoke(new Action(() => cadenceLabel.Text = $"{page.InstantaneousCadence} rpm"));
+                Invoke(new Action(() => powerLabel.Text = $"{page.InstantaneousPower} W"));
             }
             else
             {
-                UpdateCadence(page.InstantaneousCadence);
-                UpdatePower(page.InstantaneousPower);
+                cadenceLabel.Text = $"{page.InstantaneousCadence} rpm";
+                powerLabel.Text = $"{page.InstantaneousPower} W";
+            }
+
+            // If training has been started, store the received data
+            if (stopwatch.IsRunning)
+            {
+                HandleEvent("Cadence (rpm)", page.InstantaneousCadence);
+                HandleEvent("Power (W)", page.InstantaneousPower);
             }
         }
 
-        private void UpdateCadence(byte instantaneousCadence)
-        {
-            cadenceLabel.Text = $"{instantaneousCadence} rpm";
-        }
-
-        private void UpdatePower(ushort instantaneousPower)
-        {
-            powerLabel.Text = $"{instantaneousPower} W";
-        }
-
+        /// <summary>
+        /// Displays the instantaneous speed recorded by the trainer and stores it.
+        /// </summary>
+        /// <param name="page"></param>
+        /// <param name="counter"></param>
         private void ProcessSpeedData(GeneralFePage page, uint counter)
         {
-            // Convert the instantaneous speed from m/s to km/h
+            // Convert the received instantaneous speed from m/s to km/h
             double speedKmph = (double)(page.Speed) / 1000.0 * 3.6;
 
-            // Round to nearest integer
-            int roundedSpeed = (int)Math.Round(speedKmph);
-
-            // Store the converted speed with the corresponding timestamp
-            HandleEvent("Speed (km/h)", roundedSpeed);
+            // Limit the speed value to a decimal place
+            double roundedSpeed = Math.Round(speedKmph, 1);
 
             // Update the UI to show the result (asynchronously if needed)
             if (InvokeRequired)
-                Invoke(new Action(() => UpdateSpeed(roundedSpeed)));
+                Invoke(new Action(() => speedLabel.Text = $"{roundedSpeed} km/h"));
             else
-                UpdateSpeed(roundedSpeed);
-        }
+                speedLabel.Text = $"{roundedSpeed} km/h";
 
-        private void UpdateSpeed(double convertedSpeed)
-        {
-            speedLabel.Text = $"{convertedSpeed} km/h";
+            // If training has been started, store the received data
+            if (stopwatch.IsRunning)
+                HandleEvent("Speed (km/h)", roundedSpeed);
         }
 
         /// <summary>
         /// Called by all the individual event handlers to properly store recorded data.
         /// </summary>
-        /// <param name="sensorName"></param>
+        /// <param name="sourceName"></param>
         /// <param name="value"></param>
-        private void HandleEvent(string sensorName, object value)
+        private void HandleEvent(string sourceName, object value)
         {
             long timestamp;
 
@@ -239,7 +264,7 @@ namespace WindowsFormsApp
                 timestamp /= TimeSpan.TicksPerMillisecond; // Convert to milliseconds
             }
 
-            sensorData.AddData(sensorName, value, timestamp);
+            dataManager.AddData(sourceName, value, timestamp);
         }
 
         /// <summary>
@@ -461,40 +486,29 @@ namespace WindowsFormsApp
         /// Sets the fitness equipment's resistance by sending Data Page 48.
         /// </summary>
         /// <param name="resistance"></param>
-        private void SetTrainerResistance(double resistance)
+        private void SetTrainerResistance(double roundedResistance)
         {
             ControlBasicResistancePage command = new ControlBasicResistancePage
             {
-                TotalResistance = (byte)(resistance * 2) // Units: 0.5%
+                TotalResistance = Convert.ToByte(roundedResistance * 2) // Units: 0.5%
             };
             fitnessEquipmentDisplay.SendBasicResistance(command);
 
-            // Update the UI with the resistance % being sent
-            desiredResistanceLabel.Text = $"{resistance} %";
+            // Update the UI with the resistance % being sent to the trainer
+            appliedResistanceLabel.Text = $"{roundedResistance} %";
         }
 
         /// <summary>
-        /// Ends the data collection process and generates a related file for retrospective analysis.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void StopButton_Click(object sender, EventArgs e)
-        {
-            stopwatch.Stop();
-            updateTimer.Stop();
-
-            WorkoutComplete();
-        }
-
-        /// <summary>
-        /// Ends communication and app, to then generate a CSV file with data recorded by sensors.
+        /// Generates a CSV file with data characterizing the workout, to then close the app.
         /// </summary>
         private async void WorkoutComplete()
         {
+            stopwatch.Stop();
+            updateTimer.Stop();
             ShutDownCommunication();
 
-            // Generate a CSV file with all measurements taken by means of the sensors
-            sensorData.WriteToCsv("sensor-data.csv");
+            // Generate a CSV file with all values describing the activity
+            dataManager.WriteToCsv("sensor-data.csv");
 
             // Show a message box asynchronously and wait for it to be closed
             await Task.Run(() => MessageBox.Show("Output file generated!"));

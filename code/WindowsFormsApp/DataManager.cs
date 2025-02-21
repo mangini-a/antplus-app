@@ -1,20 +1,13 @@
 ﻿#region Using directives
 
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 #endregion
 
 namespace WindowsFormsApp
 {
-    public class SensorData
+    public class DataManager
     {
         /// <summary>
         /// Key: timestamp (in ms).
@@ -22,29 +15,29 @@ namespace WindowsFormsApp
         /// </summary>
         private readonly Dictionary<long, Dictionary<string, object>> data;
 
-        public SensorData()
+        public DataManager()
         {
             data = new Dictionary<long, Dictionary<string, object>>();
         }
 
         /// <summary>
-        /// Stores a measurement recorded by a sensor.
+        /// Stores a value in the dictionary that takes care of it.
         /// </summary>
-        /// <param name="sensorName"></param>
+        /// <param name="sourceName"></param>
         /// <param name="value"></param>
-        public void AddData(string sensorName, object value, long timestamp)
+        public void AddData(string sourceName, object value, long timestamp)
         {
             lock (data) // Use a lock for thread safety
             {
                 if (!data.ContainsKey(timestamp))
                     data[timestamp] = new Dictionary<string, object>();
 
-                data[timestamp][sensorName] = value;
+                data[timestamp][sourceName] = value;
             }
         }
 
         /// <summary>
-        /// Iterates through the data dictionary, sorted by timestamp, and writes each row to a CSV file.
+        /// Iterates through the data dictionary and writes each row to a CSV file.
         /// </summary>
         /// <param name="filePath"></param>
         public void WriteToCsv(string filePath)
@@ -54,33 +47,36 @@ namespace WindowsFormsApp
                 using (StreamWriter writer = new StreamWriter(filePath))
                 {
                     // Write header
-                    writer.WriteLine("Time (ms),Cadence (rpm),Power (W),Speed (km/h),HR (bpm)");
+                    writer.WriteLine("Time (ms),Cadence (rpm),Power (W),Speed (km/h),HR (bpm),Resistance (%)");
 
                     // Write entries
                     foreach (KeyValuePair<long, Dictionary<string, object>> kvp in data)
                     {
                         long timestamp = kvp.Key;
-                        Dictionary<string, object> sensorValues = kvp.Value;
+                        Dictionary<string, object> values = kvp.Value;
 
                         writer.Write(timestamp + ","); // 'timestamp' is the elapsed time in milliseconds
 
-                        writer.Write(sensorValues.ContainsKey("Cadence (rpm)") ? sensorValues["Cadence (rpm)"].ToString() : "");
+                        writer.Write(values.ContainsKey("Cadence (rpm)") ? values["Cadence (rpm)"].ToString() : "");
                         writer.Write(",");
 
-                        writer.Write(sensorValues.ContainsKey("Power (W)") ? sensorValues["Power (W)"].ToString() : "");
+                        writer.Write(values.ContainsKey("Power (W)") ? values["Power (W)"].ToString() : "");
                         writer.Write(",");
 
-                        writer.Write(sensorValues.ContainsKey("Speed (km/h)") ? sensorValues["Speed (km/h)"].ToString() : "");
+                        writer.Write(values.ContainsKey("Speed (km/h)") ? values["Speed (km/h)"].ToString() : "");
                         writer.Write(",");
 
-                        writer.WriteLine(sensorValues.ContainsKey("HR (bpm)") ? sensorValues["HR (bpm)"].ToString() : "");
+                        writer.Write(values.ContainsKey("HR (bpm)") ? values["HR (bpm)"].ToString() : "");
+                        writer.Write(",");
+
+                        writer.WriteLine(values.ContainsKey("Resistance (%)") ? values["Resistance (%)"].ToString() : "");
                     }
                 }
             }
         }
 
         /// <summary>
-        /// Clears the collected sensor measurements.
+        /// Clears data collected during an activity.
         /// </summary>
         public void ClearData()
         {
