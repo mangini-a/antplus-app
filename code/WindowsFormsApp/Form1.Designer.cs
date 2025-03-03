@@ -31,42 +31,50 @@
             this.components = new System.ComponentModel.Container();
             this.startButton = new System.Windows.Forms.Button();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
-            this.appliedResistanceLabel = new System.Windows.Forms.Label();
+            this.targetResistanceLabel = new System.Windows.Forms.Label();
             this.tableLayoutPanelGlobal = new System.Windows.Forms.TableLayoutPanel();
             this.groupBoxWorkout = new System.Windows.Forms.GroupBox();
             this.tableLayoutPanelWorkout = new System.Windows.Forms.TableLayoutPanel();
             this.timeLabel = new System.Windows.Forms.Label();
+            this.stopButton = new System.Windows.Forms.Button();
             this.groupBoxData = new System.Windows.Forms.GroupBox();
             this.tableLayoutPanelData = new System.Windows.Forms.TableLayoutPanel();
             this.cadenceLabel = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.speedLabel = new System.Windows.Forms.Label();
-            this.pictureBox3 = new System.Windows.Forms.PictureBox();
             this.powerLabel = new System.Windows.Forms.Label();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.heartRateLabel = new System.Windows.Forms.Label();
             this.pictureBox4 = new System.Windows.Forms.PictureBox();
+            this.speedLabel = new System.Windows.Forms.Label();
+            this.pictureBox3 = new System.Windows.Forms.PictureBox();
             this.groupBoxControl = new System.Windows.Forms.GroupBox();
             this.tableLayoutPanelControl = new System.Windows.Forms.TableLayoutPanel();
             this.pictureBox5 = new System.Windows.Forms.PictureBox();
-            this.numericUpDown = new System.Windows.Forms.NumericUpDown();
             this.pictureBox6 = new System.Windows.Forms.PictureBox();
+            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.actualResistanceLabel = new System.Windows.Forms.Label();
+            this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.bpmLabel = new System.Windows.Forms.Label();
+            this.numericUpDown = new System.Windows.Forms.NumericUpDown();
             this.panel1 = new System.Windows.Forms.Panel();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.controlTimer = new System.Windows.Forms.Timer(this.components);
             this.tableLayoutPanelGlobal.SuspendLayout();
             this.groupBoxWorkout.SuspendLayout();
             this.tableLayoutPanelWorkout.SuspendLayout();
             this.groupBoxData.SuspendLayout();
             this.tableLayoutPanelData.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox4)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
             this.groupBoxControl.SuspendLayout();
             this.tableLayoutPanelControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox5)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox6)).BeginInit();
+            this.tableLayoutPanel1.SuspendLayout();
+            this.tableLayoutPanel2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown)).BeginInit();
             this.SuspendLayout();
             // 
             // startButton
@@ -76,7 +84,7 @@
             this.startButton.FlatAppearance.BorderSize = 0;
             this.startButton.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.startButton.Font = new System.Drawing.Font("Trebuchet MS", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.startButton.Location = new System.Drawing.Point(730, 4);
+            this.startButton.Location = new System.Drawing.Point(124, 4);
             this.startButton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.startButton.Name = "startButton";
             this.startButton.Size = new System.Drawing.Size(358, 103);
@@ -89,15 +97,15 @@
             // 
             this.updateTimer.Tick += new System.EventHandler(this.UpdateTimer_Tick);
             // 
-            // appliedResistanceLabel
+            // targetResistanceLabel
             // 
-            this.appliedResistanceLabel.Font = new System.Drawing.Font("Nirmala UI", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.appliedResistanceLabel.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.appliedResistanceLabel.Location = new System.Drawing.Point(912, 0);
-            this.appliedResistanceLabel.Name = "appliedResistanceLabel";
-            this.appliedResistanceLabel.Size = new System.Drawing.Size(176, 113);
-            this.appliedResistanceLabel.TabIndex = 1;
-            this.appliedResistanceLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.targetResistanceLabel.Font = new System.Drawing.Font("Nirmala UI", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.targetResistanceLabel.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.targetResistanceLabel.Location = new System.Drawing.Point(3, 0);
+            this.targetResistanceLabel.Name = "targetResistanceLabel";
+            this.targetResistanceLabel.Size = new System.Drawing.Size(206, 53);
+            this.targetResistanceLabel.TabIndex = 1;
+            this.targetResistanceLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // tableLayoutPanelGlobal
             // 
@@ -142,8 +150,9 @@
             this.tableLayoutPanelWorkout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 20F));
             this.tableLayoutPanelWorkout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 30F));
             this.tableLayoutPanelWorkout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 10F));
-            this.tableLayoutPanelWorkout.Controls.Add(this.startButton, 3, 0);
-            this.tableLayoutPanelWorkout.Controls.Add(this.timeLabel, 1, 0);
+            this.tableLayoutPanelWorkout.Controls.Add(this.timeLabel, 2, 0);
+            this.tableLayoutPanelWorkout.Controls.Add(this.startButton, 1, 0);
+            this.tableLayoutPanelWorkout.Controls.Add(this.stopButton, 3, 0);
             this.tableLayoutPanelWorkout.Location = new System.Drawing.Point(6, 27);
             this.tableLayoutPanelWorkout.Name = "tableLayoutPanelWorkout";
             this.tableLayoutPanelWorkout.RowCount = 1;
@@ -154,12 +163,26 @@
             // timeLabel
             // 
             this.timeLabel.Font = new System.Drawing.Font("Rockwell", 36F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.timeLabel.Location = new System.Drawing.Point(124, 0);
+            this.timeLabel.Location = new System.Drawing.Point(488, 0);
             this.timeLabel.Name = "timeLabel";
-            this.timeLabel.Size = new System.Drawing.Size(358, 111);
+            this.timeLabel.Size = new System.Drawing.Size(236, 111);
             this.timeLabel.TabIndex = 2;
             this.timeLabel.Text = "00:00";
             this.timeLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // stopButton
+            // 
+            this.stopButton.BackColor = System.Drawing.Color.Tomato;
+            this.stopButton.Enabled = false;
+            this.stopButton.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.stopButton.Font = new System.Drawing.Font("Trebuchet MS", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.stopButton.Location = new System.Drawing.Point(730, 3);
+            this.stopButton.Name = "stopButton";
+            this.stopButton.Size = new System.Drawing.Size(358, 105);
+            this.stopButton.TabIndex = 3;
+            this.stopButton.Text = "Stop";
+            this.stopButton.UseVisualStyleBackColor = false;
+            this.stopButton.Click += new System.EventHandler(this.StopButton_Click);
             // 
             // groupBoxData
             // 
@@ -218,26 +241,6 @@
             this.pictureBox1.TabIndex = 8;
             this.pictureBox1.TabStop = false;
             // 
-            // speedLabel
-            // 
-            this.speedLabel.Font = new System.Drawing.Font("Lucida Sans Unicode", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.speedLabel.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.speedLabel.Location = new System.Drawing.Point(306, 133);
-            this.speedLabel.Name = "speedLabel";
-            this.speedLabel.Size = new System.Drawing.Size(176, 133);
-            this.speedLabel.TabIndex = 3;
-            this.speedLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // pictureBox3
-            // 
-            this.pictureBox3.Image = global::WindowsFormsApp.Properties.Resources.speed;
-            this.pictureBox3.Location = new System.Drawing.Point(124, 136);
-            this.pictureBox3.Name = "pictureBox3";
-            this.pictureBox3.Size = new System.Drawing.Size(176, 127);
-            this.pictureBox3.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBox3.TabIndex = 10;
-            this.pictureBox3.TabStop = false;
-            // 
             // powerLabel
             // 
             this.powerLabel.Font = new System.Drawing.Font("Lucida Sans Unicode", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -278,6 +281,26 @@
             this.pictureBox4.TabIndex = 6;
             this.pictureBox4.TabStop = false;
             // 
+            // speedLabel
+            // 
+            this.speedLabel.Font = new System.Drawing.Font("Lucida Sans Unicode", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.speedLabel.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.speedLabel.Location = new System.Drawing.Point(306, 133);
+            this.speedLabel.Name = "speedLabel";
+            this.speedLabel.Size = new System.Drawing.Size(176, 133);
+            this.speedLabel.TabIndex = 3;
+            this.speedLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // pictureBox3
+            // 
+            this.pictureBox3.Image = global::WindowsFormsApp.Properties.Resources.speed;
+            this.pictureBox3.Location = new System.Drawing.Point(124, 136);
+            this.pictureBox3.Name = "pictureBox3";
+            this.pictureBox3.Size = new System.Drawing.Size(176, 127);
+            this.pictureBox3.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pictureBox3.TabIndex = 10;
+            this.pictureBox3.TabStop = false;
+            // 
             // groupBoxControl
             // 
             this.groupBoxControl.Controls.Add(this.tableLayoutPanelControl);
@@ -293,17 +316,17 @@
             // tableLayoutPanelControl
             // 
             this.tableLayoutPanelControl.ColumnCount = 7;
-            this.tableLayoutPanelControl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 9.999399F));
+            this.tableLayoutPanelControl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 7F));
             this.tableLayoutPanelControl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15.0006F));
-            this.tableLayoutPanelControl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15.0006F));
+            this.tableLayoutPanelControl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 18F));
             this.tableLayoutPanelControl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 19.9988F));
             this.tableLayoutPanelControl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15.0006F));
-            this.tableLayoutPanelControl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15.0006F));
-            this.tableLayoutPanelControl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 9.999399F));
-            this.tableLayoutPanelControl.Controls.Add(this.appliedResistanceLabel, 5, 0);
+            this.tableLayoutPanelControl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 18F));
+            this.tableLayoutPanelControl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 7F));
             this.tableLayoutPanelControl.Controls.Add(this.pictureBox5, 1, 0);
-            this.tableLayoutPanelControl.Controls.Add(this.numericUpDown, 2, 0);
             this.tableLayoutPanelControl.Controls.Add(this.pictureBox6, 4, 0);
+            this.tableLayoutPanelControl.Controls.Add(this.tableLayoutPanel1, 5, 0);
+            this.tableLayoutPanelControl.Controls.Add(this.tableLayoutPanel2, 2, 0);
             this.tableLayoutPanelControl.Location = new System.Drawing.Point(6, 27);
             this.tableLayoutPanelControl.Name = "tableLayoutPanelControl";
             this.tableLayoutPanelControl.RowCount = 1;
@@ -314,12 +337,69 @@
             // pictureBox5
             // 
             this.pictureBox5.Image = global::WindowsFormsApp.Properties.Resources.technology;
-            this.pictureBox5.Location = new System.Drawing.Point(124, 3);
+            this.pictureBox5.Location = new System.Drawing.Point(87, 3);
             this.pictureBox5.Name = "pictureBox5";
             this.pictureBox5.Size = new System.Drawing.Size(176, 107);
             this.pictureBox5.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox5.TabIndex = 3;
             this.pictureBox5.TabStop = false;
+            // 
+            // pictureBox6
+            // 
+            this.pictureBox6.Image = global::WindowsFormsApp.Properties.Resources.setting;
+            this.pictureBox6.Location = new System.Drawing.Point(729, 3);
+            this.pictureBox6.Name = "pictureBox6";
+            this.pictureBox6.Size = new System.Drawing.Size(176, 107);
+            this.pictureBox6.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pictureBox6.TabIndex = 4;
+            this.pictureBox6.TabStop = false;
+            // 
+            // tableLayoutPanel1
+            // 
+            this.tableLayoutPanel1.ColumnCount = 1;
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel1.Controls.Add(this.targetResistanceLabel, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.actualResistanceLabel, 0, 1);
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(911, 3);
+            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+            this.tableLayoutPanel1.RowCount = 2;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(212, 107);
+            this.tableLayoutPanel1.TabIndex = 5;
+            // 
+            // actualResistanceLabel
+            // 
+            this.actualResistanceLabel.Font = new System.Drawing.Font("Nirmala UI", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.actualResistanceLabel.Location = new System.Drawing.Point(3, 53);
+            this.actualResistanceLabel.Name = "actualResistanceLabel";
+            this.actualResistanceLabel.Size = new System.Drawing.Size(206, 54);
+            this.actualResistanceLabel.TabIndex = 2;
+            this.actualResistanceLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // tableLayoutPanel2
+            // 
+            this.tableLayoutPanel2.ColumnCount = 1;
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel2.Controls.Add(this.bpmLabel, 0, 1);
+            this.tableLayoutPanel2.Controls.Add(this.numericUpDown, 0, 0);
+            this.tableLayoutPanel2.Location = new System.Drawing.Point(269, 3);
+            this.tableLayoutPanel2.Name = "tableLayoutPanel2";
+            this.tableLayoutPanel2.RowCount = 2;
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(212, 107);
+            this.tableLayoutPanel2.TabIndex = 6;
+            // 
+            // bpmLabel
+            // 
+            this.bpmLabel.Font = new System.Drawing.Font("Nirmala UI", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.bpmLabel.Location = new System.Drawing.Point(3, 53);
+            this.bpmLabel.Name = "bpmLabel";
+            this.bpmLabel.Size = new System.Drawing.Size(206, 54);
+            this.bpmLabel.TabIndex = 0;
+            this.bpmLabel.Text = "bpm";
+            this.bpmLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // numericUpDown
             // 
@@ -330,36 +410,26 @@
             0,
             0,
             0});
-            this.numericUpDown.Location = new System.Drawing.Point(306, 35);
+            this.numericUpDown.Location = new System.Drawing.Point(3, 5);
             this.numericUpDown.Maximum = new decimal(new int[] {
-            200,
+            180,
             0,
             0,
             0});
             this.numericUpDown.Minimum = new decimal(new int[] {
-            50,
+            60,
             0,
             0,
             0});
             this.numericUpDown.Name = "numericUpDown";
-            this.numericUpDown.Size = new System.Drawing.Size(176, 43);
+            this.numericUpDown.Size = new System.Drawing.Size(206, 43);
             this.numericUpDown.TabIndex = 2;
             this.numericUpDown.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.numericUpDown.Value = new decimal(new int[] {
-            150,
+            100,
             0,
             0,
             0});
-            // 
-            // pictureBox6
-            // 
-            this.pictureBox6.Image = global::WindowsFormsApp.Properties.Resources.setting;
-            this.pictureBox6.Location = new System.Drawing.Point(730, 3);
-            this.pictureBox6.Name = "pictureBox6";
-            this.pictureBox6.Size = new System.Drawing.Size(176, 107);
-            this.pictureBox6.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBox6.TabIndex = 4;
-            this.pictureBox6.TabStop = false;
             // 
             // panel1
             // 
@@ -378,6 +448,11 @@
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(1236, 12);
             this.panel2.TabIndex = 5;
+            // 
+            // controlTimer
+            // 
+            this.controlTimer.Interval = 5000;
+            this.controlTimer.Tick += new System.EventHandler(this.ControlTimer_Tick);
             // 
             // Form1
             // 
@@ -399,14 +474,16 @@
             this.groupBoxData.ResumeLayout(false);
             this.tableLayoutPanelData.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox4)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
             this.groupBoxControl.ResumeLayout(false);
             this.tableLayoutPanelControl.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox5)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox6)).EndInit();
+            this.tableLayoutPanel1.ResumeLayout(false);
+            this.tableLayoutPanel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -414,7 +491,7 @@
         #endregion
         private System.Windows.Forms.Button startButton;
         private System.Windows.Forms.Timer updateTimer;
-        private System.Windows.Forms.Label appliedResistanceLabel;
+        private System.Windows.Forms.Label targetResistanceLabel;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanelGlobal;
         private System.Windows.Forms.Label timeLabel;
         private System.Windows.Forms.Label speedLabel;
@@ -436,6 +513,12 @@
         private System.Windows.Forms.PictureBox pictureBox6;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.Button stopButton;
+        private System.Windows.Forms.Timer controlTimer;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.Label actualResistanceLabel;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
+        private System.Windows.Forms.Label bpmLabel;
     }
 }
 

@@ -2,37 +2,74 @@
 {
     class Controller
     {
-        // Coefficients for the proportional and integral terms
-        private const double Kp = 0.1;
-        private const double Ki = 0.01;
+        private readonly double Kp;     // Proportional gain coefficient
+        private readonly double Ki;     // Integral gain coefficient
+        private readonly double Ts;     // Sampling time (how often control actions are computed, in seconds)
 
-        // Variables needed to implement a PI controller
-        private int error = 0;
-        private int previousError = 0;
+        private double error = 0;
         private double integralTerm = 0;
-        private readonly byte setpoint;
+        private readonly double setpoint;
+
+        public double MaxOutput { get; set; } = 100;
+        public double MinOutput { get; set; } = 1;
 
         /// <summary>
-        /// Instantiates a PI controller that operates on the provided setpoint.
+        /// Instantiates a PI controller with the provided setpoint, gains, and sampling frequency.
         /// </summary>
         /// <param name="setpoint"></param>
-        public Controller(byte setpoint)
+        public Controller(double setpoint, double kp = 1.5, double ki = 1.0, double ts = 5)
         {
             this.setpoint = setpoint;
+            this.Kp = kp;
+            this.Ki = ki;
+            this.Ts = ts;
         }
 
         /// <summary>
-        /// Calculates the control action depending on the measured process variable.
+        /// Calculates the control action depending on the last measured process variable.
         /// </summary>
         /// <param name="processVariable"></param>
         /// <returns></returns>
-        public double ComputeControlAction(byte processVariable)
+        public double ComputeControlAction(double processVariable)
         {
+            // Calculate current error
             error = setpoint - processVariable;
-            integralTerm += previousError * Ki;     // Sampling time is equal to about one second
-            previousError = error;
 
-            return error * Kp + integralTerm;
+            // Calculate proportional term
+            double proportionalTerm = Kp * error;
+
+            // Update integral term using current error
+            integralTerm += Ki * Ts * error;
+
+            // Calculate complete control action
+            double output = proportionalTerm + integralTerm;
+
+            // Apply limits and handle anti-windup
+            if (output > MaxOutput)
+            {
+                output = MaxOutput;
+                // If we're saturated high and error is positive, don't accumulate integral
+                if (error > 0)
+                    integralTerm -= Ki * Ts * error;
+            }
+            else if (output < MinOutput)
+            {
+                output = MinOutput;
+                // If we're saturated low and error is negative, don't accumulate integral
+                if (error < 0)
+                    integralTerm -= Ki * Ts * error;
+            }
+
+            return output;
+        }
+
+        /// <summary>
+        /// Resets the controller's state.
+        /// </summary>
+        public void Reset()
+        {
+            error = 0;
+            integralTerm = 0;
         }
     }
 }
