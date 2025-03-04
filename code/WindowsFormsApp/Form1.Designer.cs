@@ -451,7 +451,7 @@
             // 
             // controlTimer
             // 
-            this.controlTimer.Interval = 5000;
+            this.controlTimer.Interval = 15000;
             this.controlTimer.Tick += new System.EventHandler(this.ControlTimer_Tick);
             // 
             // Form1

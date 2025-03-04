@@ -7,6 +7,7 @@
         private readonly double Ts;     // Sampling time (how often control actions are computed, in seconds)
 
         private double error = 0;
+        private double previousError = 0;
         private double integralTerm = 0;
         private readonly double setpoint;
 
@@ -17,7 +18,7 @@
         /// Instantiates a PI controller with the provided setpoint, gains, and sampling frequency.
         /// </summary>
         /// <param name="setpoint"></param>
-        public Controller(double setpoint, double kp = 1.5, double ki = 1.0, double ts = 5)
+        public Controller(double setpoint, double kp = 0.75, double ki = 0, double ts = 15)
         {
             this.setpoint = setpoint;
             this.Kp = kp;
@@ -32,17 +33,12 @@
         /// <returns></returns>
         public double ComputeControlAction(double processVariable)
         {
-            // Calculate current error
-            error = setpoint - processVariable;
-
-            // Calculate proportional term
-            double proportionalTerm = Kp * error;
-
-            // Update integral term using current error
-            integralTerm += Ki * Ts * error;
+            error = setpoint - processVariable;         // Calculate current error
+            integralTerm += Ki * Ts * previousError;    // Update integral term using previous error
+            previousError = error;                      // Update previous error with current one
 
             // Calculate complete control action
-            double output = proportionalTerm + integralTerm;
+            double output = Kp * error + integralTerm;
 
             // Apply limits and handle anti-windup
             if (output > MaxOutput)
@@ -69,6 +65,7 @@
         public void Reset()
         {
             error = 0;
+            previousError = 0;
             integralTerm = 0;
         }
     }
