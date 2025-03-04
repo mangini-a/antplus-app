@@ -412,31 +412,61 @@ namespace WindowsFormsApp
 
             #region Stick (S) - Monitor (M) link
 
-            monitorChannel.assignChannel(ANT_ReferenceLibrary.ChannelType.BASE_Slave_Receive_0x00, USER_NETWORK_NUM);
+            if (!monitorChannel.assignChannel(ANT_ReferenceLibrary.ChannelType.BASE_Slave_Receive_0x00, USER_NETWORK_NUM, 500))
+                throw new Exception("Error assigning hub-monitor channel");
 
             if (!monitorChannel.setChannelID(USER_HR_DEVICENUM, false, USER_HR_DEVICETYPE, USER_TRANSTYPE, 500))
-                throw new Exception("Error configuring Channel 0 ID");
+                throw new Exception("Error configuring hub-monitor channel ID");
 
-            monitorChannel.setChannelFreq(USER_RADIOFREQ);      // RF Channel 57 (2457MHz)
-            monitorChannel.setChannelPeriod(32280);             // 1.02 Hz, 1 message/second
-            monitorChannel.setLowPrioritySearchTimeout(12);     // 30 seconds (?)
-            monitorChannel.setChannelSearchTimeout(0);          // Disable high priority search mode
-            monitorChannel.setProximitySearch(0);               // Disable proximity search (?)
+            // RF Channel 57 (2457MHz)
+            if (!monitorChannel.setChannelFreq(USER_RADIOFREQ, 500))                
+                throw new Exception("Error configuring hub-monitor channel RF");
+
+            // 1.02 Hz, 1 message/second
+            if (!monitorChannel.setChannelPeriod(32280, 500))                       
+                throw new Exception("Error configuring hub-monitor channel period");
+
+            // 30 seconds (?)
+            if (!monitorChannel.setLowPrioritySearchTimeout(12, 500))                    
+                throw new Exception("Error configuring hub-monitor channel LP search timeout");
+
+            // Disable high priority search mode
+            if (!monitorChannel.setChannelSearchTimeout(0, 500))                         
+                throw new Exception("Error configuring hub-monitor channel search timeout");
+
+            // Disable proximity search (?)
+            if (!monitorChannel.setProximitySearch(0, 500))                              
+                throw new Exception("Error configuring hub-monitor channel proximity search");
 
             #endregion
 
             #region Stick (S) - Trainer (M) link
 
-            trainerChannel.assignChannel(ANT_ReferenceLibrary.ChannelType.BASE_Slave_Receive_0x00, USER_NETWORK_NUM);
+            if (!trainerChannel.assignChannel(ANT_ReferenceLibrary.ChannelType.BASE_Slave_Receive_0x00, USER_NETWORK_NUM, 500))
+                throw new Exception("Error assigning hub-trainer channel");
 
             if (!trainerChannel.setChannelID(USER_FE_DEVICENUM, false, USER_FE_DEVICETYPE, USER_TRANSTYPE, 500))
-                throw new Exception("Error configuring Channel 1 ID");
+                throw new Exception("Error configuring hub-trainer channel ID");
 
-            trainerChannel.setChannelFreq(USER_RADIOFREQ);      // RF Channel 57 (2457MHz)
-            trainerChannel.setChannelPeriod(8192);              // 4 Hz, 4 messages/second 
-            trainerChannel.setLowPrioritySearchTimeout(12);     // 30 seconds (?)
-            trainerChannel.setChannelSearchTimeout(0);          // Disable high priority search mode
-            trainerChannel.setProximitySearch(0);               // Disable proximity search (?)
+            // RF Channel 57 (2457MHz)
+            if (!trainerChannel.setChannelFreq(USER_RADIOFREQ, 500))
+                throw new Exception("Error configuring hub-trainer channel RF");
+
+            // 4 Hz, 4 messages/second
+            if (!trainerChannel.setChannelPeriod(8192, 500))
+                throw new Exception("Error configuring hub-trainer channel period");
+
+            // 30 seconds (?)
+            if (!trainerChannel.setLowPrioritySearchTimeout(12, 500))
+                throw new Exception("Error configuring hub-trainer channel LP search timeout");
+
+            // Disable high priority search mode
+            if (!trainerChannel.setChannelSearchTimeout(0, 500))
+                throw new Exception("Error configuring hub-trainer channel search timeout");
+
+            // Disable proximity search (?)
+            if (!trainerChannel.setProximitySearch(0, 500))
+                throw new Exception("Error configuring hub-trainer channel proximity search");
 
             #endregion
 
