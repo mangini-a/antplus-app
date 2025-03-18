@@ -1,5 +1,5 @@
 ## Key classes
-The main classes building up the implemented solution are listed:
+The main classes building up the implemented solution (which can be found within [this subfolder](WindowsFormsApp/)) are listed:
 
 + **Form1.cs**  
 Represents the window making up the application's user interface, which also takes care of configuring the ANT+ network and acquiring data during workouts with the help of the involved hardware; it is responsible for creating an object of the two classes mentioned below at the appropriate time, too.
