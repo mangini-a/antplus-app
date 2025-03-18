@@ -15,7 +15,7 @@
         public double MinOutput { get; set; } = 1;
 
         /// <summary>
-        /// Instantiates a PI controller with the provided setpoint, gains, and sampling frequency.
+        /// Instantiates a PI controller with the provided setpoint, gains, and sampling time.
         /// </summary>
         /// <param name="setpoint"></param>
         public Controller(double setpoint, double kp = 0.75, double ki = 0, double ts = 15)
